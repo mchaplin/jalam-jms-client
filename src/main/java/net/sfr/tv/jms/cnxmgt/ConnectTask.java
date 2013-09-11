@@ -17,14 +17,12 @@ package net.sfr.tv.jms.cnxmgt;
 
 import java.util.concurrent.Callable;
 import javax.jms.Connection;
+import javax.jms.ExceptionListener;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.context.JmsContext;
 import org.apache.log4j.Logger;
-import org.hornetq.api.core.client.SessionFailureListener;
-import org.hornetq.jms.client.HornetQConnection;
-import org.hornetq.jms.client.HornetQSession;
 
 /**
  *
@@ -40,13 +38,13 @@ public class ConnectTask implements Callable<JmsContext> {
     
     private String connectionFactory;
     
-    private SessionFailureListener sl;
+    private ExceptionListener el;
     
-    public ConnectTask(Context jndiContext, String clientId, String connectionFactory, SessionFailureListener sl) {
+    public ConnectTask(Context jndiContext, String clientId, String connectionFactory, ExceptionListener el) {
         this.jndiContext = jndiContext;
         this.clientId = clientId;
         this.connectionFactory = connectionFactory;
-        this.sl = sl;
+        this.el = el;
     }
     
     @Override
@@ -60,10 +58,8 @@ public class ConnectTask implements Callable<JmsContext> {
         try {
                     
             cnx = ContextFactory.getConnection(jndiContext, clientId, connectionFactory);
-            LOGGER.info("HornetQ connection UID : " + ((HornetQConnection) cnx).getUID());
-
+            cnx.setExceptionListener((ExceptionListener) el);
             session = ContextFactory.createSession(cnx);
-            ((HornetQSession) session).getCoreSession().addFailureListener(sl);
           
             return new JmsContext(jndiContext, cnx, session);
             

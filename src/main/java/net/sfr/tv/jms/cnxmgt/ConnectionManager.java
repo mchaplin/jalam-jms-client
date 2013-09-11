@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
 import javax.jms.Session;
@@ -31,15 +32,13 @@ import net.sfr.tv.jms.client.context.JndiServerDescriptor;
 import net.sfr.tv.jms.client.context.JmsSubscription;
 import net.sfr.tv.jms.client.context.JmsSubscriptionDescriptor;
 import org.apache.log4j.Logger;
-import org.hornetq.api.core.HornetQException;
-import org.hornetq.api.core.client.SessionFailureListener;
 
 /**
  * Stateful management of JMS connection, handling failover & reconnections
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class ConnectionManager implements SessionFailureListener {
+public class ConnectionManager implements ExceptionListener {
     
     private static final Logger LOGGER = Logger.getLogger(ConnectionManager.class);
     
@@ -234,53 +233,50 @@ public class ConnectionManager implements SessionFailureListener {
             }
         }
     }
-    
-    @Override
-    public void beforeReconnect(HornetQException hqe) {
-        LOGGER.warn("beforeReconnect : ".concat(hqe.getMessage()));
-    }
 
     @Override
-    public void connectionFailed(HornetQException hqe, boolean bln) {
+    public void onException(JMSException jmse) {
         
-        LOGGER.warn("connectionFailed : ".concat(hqe.getMessage()));
-
-        // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
-        Set<JmsSubscriptionDescriptor> subscriptionsMeta = new HashSet<JmsSubscriptionDescriptor>();
-        for (JmsSubscription subscription : context.getSubscriptions()) {
-            subscriptionsMeta.add(subscription.getMetadata());
-        }
+        LOGGER.warn("onException : ".concat(jmse.getMessage()));
         
-        // BLACKLIST ACTIVE SERVER
-        LOGGER.error("Active Server not available anymore ! ".concat(activeServer.getProviderUrl()));
-        if (availableServers.size() > 1) {
-            for (JndiServerDescriptor srv : availableServers) {
-                if (!srv.equals(activeServer)) {
-                    activeServer = srv;
-                    break;
-                }
-            }            
-        }
-
-        // LOOKUP NEW JNDI CONTEXT
-        lookup(activeServer, 2);
-        LOGGER.info("Group : ".concat(name).concat(" , JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
-        
-        // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
-        connect(2);
-
-        // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
-        for (JmsSubscriptionDescriptor meta : subscriptionsMeta) {
-            subscribe(meta, 5);
-        }
-
-        try {
-            start();
-        } catch (JMSException ex) {
-            LOGGER.error("Unable to start connection !", ex);
+        if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
+            // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
+            Set<JmsSubscriptionDescriptor> subscriptionsMeta = new HashSet<JmsSubscriptionDescriptor>();
             for (JmsSubscription subscription : context.getSubscriptions()) {
-                unsubscribe(subscription, context.getSession());
+                subscriptionsMeta.add(subscription.getMetadata());
             }
+
+            // BLACKLIST ACTIVE SERVER
+            LOGGER.error("Active Server not available anymore ! ".concat(activeServer.getProviderUrl()));
+            if (availableServers.size() > 1) {
+                for (JndiServerDescriptor srv : availableServers) {
+                    if (!srv.equals(activeServer)) {
+                        activeServer = srv;
+                        break;
+                    }
+                }            
+            }
+
+            // LOOKUP NEW JNDI CONTEXT
+            lookup(activeServer, 2);
+            LOGGER.info("Group : ".concat(name).concat(" , JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
+
+            // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
+            connect(2);
+
+            // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
+            for (JmsSubscriptionDescriptor meta : subscriptionsMeta) {
+                subscribe(meta, 5);
+            }
+
+            try {
+                start();
+            } catch (JMSException ex) {
+                LOGGER.error("Unable to start connection !", ex);
+                for (JmsSubscription subscription : context.getSubscriptions()) {
+                    unsubscribe(subscription, context.getSession());
+                }
+            }   
         }
     }
 
