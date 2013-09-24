@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import net.sfr.tv.exceptions.ResourceInitializerException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -143,8 +144,8 @@ public class Bootstrap {
                 LOGGER.info("\n");
                 LOGGER.info("Examples : ");
                 LOGGER.info("\t Persistent topic subscription, with clientID set : java -jar jms-client-core.jar -d /topic/1 -p -s mySubscriptionIdentifier -c myClientId");
-                LOGGER.info("\t Unsubscribe then exit : java -jar jms-client-core.jar -u -s mySubscriptionIdentifier -c myClientId");
-                LOGGER.info("\t Subscribe to multiple destinations : java -jar jms-client-core.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier");
+                LOGGER.info("\t Unsubscribe then exit : java -jar jalam.jar -u -s mySubscriptionIdentifier -c myClientId");
+                LOGGER.info("\t Subscribe to multiple destinations : java -jar jalam.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier");
                 System.exit(1);
             }
             
@@ -234,6 +235,9 @@ public class Bootstrap {
             ex.printStackTrace(System.err);
             System.exit(1);
         } catch (IOException ex) {
+            ex.printStackTrace(System.err);
+            System.exit(1);            
+        } catch (ResourceInitializerException ex) {
             ex.printStackTrace(System.err);
             System.exit(1);            
         }

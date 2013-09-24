@@ -63,16 +63,13 @@ public class JmsClient implements Runnable {
      * @param listenerClassName     JMS listener class name
      * @param cnxFactoryJndiName    JMS connection factory JNDI name
      */
-    public JmsClient(Map<String, Set<JndiServerDescriptor>> servers, String destination, Boolean isTopicSubscription, Boolean isDurableSubscription, String clientId, String subscriptionBaseName, String selector, String listenerClassName, String cnxFactoryJndiName) {
+    public JmsClient(Map<String, Set<JndiServerDescriptor>> servers, String destination, Boolean isTopicSubscription, Boolean isDurableSubscription, String clientId, String subscriptionBaseName, String selector, String listenerClassName, String cnxFactoryJndiName) throws ResourceInitializerException {
 
         try {
             listenerWrapper = instantiateListenerWrapper(listenerClassName);
             listenerClass = ClassLoader.getSystemClassLoader().loadClass(listenerClassName);
-        } catch (ResourceInitializerException ex) {
-            // EXIT PROGRAM
-            throw new RuntimeException(ex);
         } catch (ClassNotFoundException ex) {
-            throw new RuntimeException(ex);
+            throw new ResourceInitializerException(ex);
         }
         
         if (LOGGER.isInfoEnabled()) {
