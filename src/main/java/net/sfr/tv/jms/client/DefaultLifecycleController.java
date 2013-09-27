@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.LifecycleProviderInterface;
+import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import org.apache.log4j.Logger;
 
@@ -27,9 +27,9 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class DefaultLifecycleProvider implements LifecycleProviderInterface {
+public class DefaultLifecycleController implements LifecycleControllerInterface {
     
-    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleProvider.class);
+    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleController.class);
     
     private Map<Integer,MessageListenerWrapper> listeners;
     
@@ -37,7 +37,7 @@ public class DefaultLifecycleProvider implements LifecycleProviderInterface {
     
     private int retrievalIdx = 0;
     
-    public DefaultLifecycleProvider(Class listenerClass) throws ResourceInitializerException {
+    public DefaultLifecycleController(Class listenerClass) throws ResourceInitializerException {
         listeners = new HashMap<Integer,MessageListenerWrapper>();
         listeners.put(insertIdx++, createListener(listenerClass));
     }

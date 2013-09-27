@@ -95,10 +95,12 @@ public class ContextFactory {
      * @param ctx
      * @param clientId
      * @param connectionFactory 
+     * @param login
+     * @param password
      * @return
      * @throws ResourceInitializerException
      */
-    public static Connection getConnection(Context ctx, String clientId, String connectionFactory) throws ResourceInitializerException {
+    public static Connection getConnection(Context ctx, String clientId, String connectionFactory, String login, String password) throws ResourceInitializerException {
 
         Connection cnx = null;
 

@@ -38,12 +38,18 @@ public class ConnectTask implements Callable<JmsContext> {
     
     private String connectionFactory;
     
+    private String login;
+    
+    private String password;
+    
     private ExceptionListener el;
     
-    public ConnectTask(Context jndiContext, String clientId, String connectionFactory, ExceptionListener el) {
+    public ConnectTask(Context jndiContext, String clientId, String connectionFactory, String login, String password, ExceptionListener el) {
         this.jndiContext = jndiContext;
         this.clientId = clientId;
         this.connectionFactory = connectionFactory;
+        this.login = login;
+        this.password = password;
         this.el = el;
     }
     
@@ -57,7 +63,7 @@ public class ConnectTask implements Callable<JmsContext> {
         
         try {
                     
-            cnx = ContextFactory.getConnection(jndiContext, clientId, connectionFactory);
+            cnx = ContextFactory.getConnection(jndiContext, clientId, connectionFactory, login, password);
             cnx.setExceptionListener((ExceptionListener) el);
             session = ContextFactory.createSession(cnx);
           

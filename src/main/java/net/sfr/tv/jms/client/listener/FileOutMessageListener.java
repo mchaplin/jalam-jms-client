@@ -66,7 +66,7 @@ public class FileOutMessageListener implements MessageListenerWrapper {
             }
 
             // ACK the message to remove it from the queue.
-            //msg.acknowledge();
+            msg.acknowledge();
 
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);

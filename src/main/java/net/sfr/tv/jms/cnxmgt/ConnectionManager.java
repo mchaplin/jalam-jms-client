@@ -47,7 +47,14 @@ public class ConnectionManager implements ExceptionListener {
     /** JMS Connection Factory JNDI name */
     private String cnxFactoryJndiName;
     
+    /** JMS ClientID */
     private String clientId;
+    
+    /** JMS login */
+    private String login;
+    
+    /** JMS password */
+    private String password;
         
     /** Configuration reference */
     private Set<JndiServerDescriptor> availableServers;
@@ -66,11 +73,13 @@ public class ConnectionManager implements ExceptionListener {
     /** TODO : Add support for a dedicated listener per subscription. JMS2 supports multiple listener instance.*/
     private MessageListener listener;
     
-    public ConnectionManager(String name, Set<JndiServerDescriptor> servers, String clientId, String cnxFactoryJndiName, MessageListener listener) {
+    public ConnectionManager(String name, Set<JndiServerDescriptor> servers, String clientId, String cnxFactoryJndiName, String login, String password, MessageListener listener) {
         
         this.name = name;
         this.clientId = clientId;
         this.cnxFactoryJndiName = cnxFactoryJndiName;
+        this.login = login;
+        this.password = password;
         this.listener = listener;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         
@@ -114,7 +123,7 @@ public class ConnectionManager implements ExceptionListener {
         try {
             while (futureContext == null || (context = futureContext.get()) == null) {
                 // reschedule a task
-                ct = new ConnectTask(jndiContext, clientId, cnxFactoryJndiName, this);
+                ct = new ConnectTask(jndiContext, clientId, cnxFactoryJndiName, login, password, this);
                 futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
                 initConnect = false;
             }

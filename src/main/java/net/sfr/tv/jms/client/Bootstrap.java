@@ -72,7 +72,8 @@ public class Bootstrap {
             Properties props = new Properties();
             // TRY TO LOAD LOG4J PROPERTIES. (OTHERWISE, IT WILL BE THE RESPONSABILITY OF THE TARGET WRAPPER)
             try {
-                InputStream is = Bootstrap.class.getResourceAsStream("/log4j.properties");
+                //InputStream is = Bootstrap.class.getResourceAsStream("/log4j.properties");
+                InputStream is = Bootstrap.class.getResourceAsStream("log4j.properties");
                 if (is != null) {
                     props.load(is);
                 } else {
@@ -131,19 +132,19 @@ public class Bootstrap {
                 }
             }
 
-            String handlerClassName = System.getProperty("handler.class", "net.sfr.tv.jms.client.listener.StdOutMessageListener");
+            String handlerClassName = System.getProperty("handler.class", "net.sfr.tv.jms.client.listener.LoggerMessageListener");
 
             // CHECK FOR ARGUMENTS CONSISTENCY
             if (destination == null || subscriptionName == null) {
                 LOGGER.info("Usage : ");
-                LOGGER.info("\tjava (-Dhandler.class=your.listener) -jar jms-client-core.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) <-f [filter]>\n");
+                LOGGER.info("\tjava (-Dhandler.class=your.listener) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
                 LOGGER.info("\t -q  : Destination is a queue. Topic is default.");
                 LOGGER.info("\t -p  : Create a persistent ('durable') subscription. Default is false.");
                 LOGGER.info("\t -u  : Unsubscribe an active durable subscription, then exit.");
                 LOGGER.info("\t -cf : JNDI Connection Factory name. Default 'ConsumerConnectionFactory'.");
                 LOGGER.info("\n");
                 LOGGER.info("Examples : ");
-                LOGGER.info("\t Persistent topic subscription, with clientID set : java -jar jms-client-core.jar -d /topic/1 -p -s mySubscriptionIdentifier -c myClientId");
+                LOGGER.info("\t Persistent topic subscription, with clientID set : java -jar jalam.jar -d /topic/1 -p -s mySubscriptionIdentifier -c myClientId");
                 LOGGER.info("\t Unsubscribe then exit : java -jar jalam.jar -u -s mySubscriptionIdentifier -c myClientId");
                 LOGGER.info("\t Subscribe to multiple destinations : java -jar jalam.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier");
                 System.exit(1);
@@ -199,6 +200,9 @@ public class Bootstrap {
                 }
             }
 
+            String login = props.getProperty("jms.login", "guest");
+            String password = props.getProperty("jms.password", "guest");
+            
             // LOG RUNTIME DATA
             Properties system = System.getProperties();
             if (system != null && !system.isEmpty()) {
@@ -210,13 +214,13 @@ public class Bootstrap {
             }
 
             if (unsubscribeAndExit) {
-                final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
+                final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory, login, password);
                 client.shutdown();
                 System.exit(0);
             }
             
             // BOOTSTRAP
-            final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
+            final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory, login, password);
             Thread clientThread = new Thread(client);
             clientThread.start();
             

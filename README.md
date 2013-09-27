@@ -79,17 +79,30 @@ Usage :
 
 java -cp jalam-<version>.jar net.sfr.tv.jms.client.Bootstrap <arguments>
 
-    -Dhandler.class=<your.listener.class> -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) <-f [filter]>
+    -Dhandler.class=<your.listener.class> -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) (-cf[connectionFactoryName]) <-f [filter]>
     -q  : Destination is a queue. Topic is default.
     -p  : Create a persistent ('durable') subscription. Default is false.
     -u  : Unsubscribe an active durable subscription, then exit.
     -cf : JNDI Connection Factory name. Default 'ConsumerConnectionFactory'.
+    -Dhandler.class : Set the MessageListener to use. Default is net.sfr.tv.jms.client.listener.LoggerMessageListener
                 
 Examples :
-    Persistent topic subscription, with clientID set : java -jar jalam-0.4.2.jar -d /topic/1 -p -s mySubscriptionIdentifier -c myClientId
-    Unsubscribe then exit : java -jar jalam-0.4.2.jar -u -s mySubscriptionIdentifier -c myClientId
-    Subscribe to multiple destinations : java -jar jalam-0.4.2.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier
+    Persistent topic subscription, with clientID set : java -jar jalam.jar -d /topic/1 -p -s mySubscriptionIdentifier -c myClientId
+    Unsubscribe then exit : java -jar jalam.jar -u -s mySubscriptionIdentifier -c myClientId
+    Subscribe to multiple destinations : java -jar jalam.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier
 
+Listeners :
+~~~~~~~~~~~
+
+By default, Jalam uses a 'Logger Listener' which output messages content to Log4J.
+ - A custom logger can be used, by setting the system property 'listener.logger.name'
+ - Output can be restricted to only include message body, by setting the system property 'listener.output.type' to 'BODY'
+
+An alternative listener which output to a file is provided :
+ - -Dhandler.class=net.sfr.tv.jms.client.listener.FileOutMessageListener
+ - Destination file is set with the system property 'listener.file.output'. (Absolute path)
+
+Refer to the next section to use customs MessageListeners.
 	
 Extensibility :
 ===============================================================================
@@ -105,7 +118,7 @@ Lifecyle provider :
 ~~~~~~~~~~~~~~~~~~~
 
 In order to handle more complex usage, where you need to initialize and keep tracks of many resources outside of the JMS listeners,
-you can implement the net.sfr.tv.jms.client.api.LifecycleProviderInterface, which provides the following methods :
+you can implement the net.sfr.tv.jms.client.api.LifecycleControllerInterface, which provides the following methods :
 
  - run() : Called at startup, and allows to initialize resource such as thread pools, external network connections (JDBC,FTP, etc...)
  - release() : Release previously mentionned resources.

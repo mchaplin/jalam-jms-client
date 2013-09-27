@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.LifecycleProviderInterface;
+import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
 import org.apache.log4j.Logger;
 
 /**
@@ -47,7 +47,7 @@ public class JmsClient implements Runnable {
     private Class listenerClass;
     
     /** Listener wrapper class (alternate to using a listener class */
-    private LifecycleProviderInterface listenerWrapper = null;
+    private LifecycleControllerInterface listenerWrapper = null;
 
     /**
      * 
@@ -62,8 +62,23 @@ public class JmsClient implements Runnable {
      * @param selector              JMS selector
      * @param listenerClassName     JMS listener class name
      * @param cnxFactoryJndiName    JMS connection factory JNDI name
+     * @param login                 JMS login
+     * @param password              JMS password
      */
-    public JmsClient(Map<String, Set<JndiServerDescriptor>> servers, String destination, Boolean isTopicSubscription, Boolean isDurableSubscription, String clientId, String subscriptionBaseName, String selector, String listenerClassName, String cnxFactoryJndiName) throws ResourceInitializerException {
+    public JmsClient(
+            Map<String, Set<JndiServerDescriptor>> servers, 
+            String destination, 
+            Boolean isTopicSubscription, 
+            Boolean isDurableSubscription, 
+            String clientId, 
+            String subscriptionBaseName, 
+            String selector, 
+            String listenerClassName, 
+            String cnxFactoryJndiName, 
+            String login, 
+            String password) throws ResourceInitializerException {
+            
+    
 
         try {
             listenerWrapper = instantiateListenerWrapper(listenerClassName);
@@ -85,7 +100,7 @@ public class JmsClient implements Runnable {
 
         for (String group : servers.keySet()) {
             try {
-                ConnectionManager cnxManager = new ConnectionManager(group, servers.get(group), clientId, cnxFactoryJndiName, listenerWrapper.getListener(listenerClass));
+                ConnectionManager cnxManager = new ConnectionManager(group, servers.get(group), clientId, cnxFactoryJndiName, login, password, listenerWrapper.getListener(listenerClass));
                 cnxManager.connect(2);
                 String[] sDestinations = destination.split("\\,");
                 int consumerIdx = 0;
@@ -123,9 +138,9 @@ public class JmsClient implements Runnable {
      * @return
      * @throws ResourceInitializerException 
      */
-    private LifecycleProviderInterface instantiateListenerWrapper(String className) throws ResourceInitializerException {
+    private LifecycleControllerInterface instantiateListenerWrapper(String className) throws ResourceInitializerException {
 
-        LifecycleProviderInterface ret = null;
+        LifecycleControllerInterface ret = null;
 
         LOGGER.info("Instantiating handler : ".concat(className));
         
@@ -133,13 +148,13 @@ public class JmsClient implements Runnable {
             // Instantiate MessageListener
             Class handlerClass = ClassLoader.getSystemClassLoader().loadClass(className);
             
-            if (DefaultLifecycleProvider.class.isAssignableFrom(handlerClass)) {
+            if (DefaultLifecycleController.class.isAssignableFrom(handlerClass)) {
                 
                 Constructor ct = handlerClass.getConstructor();
-                ret = (LifecycleProviderInterface) ct.newInstance();
+                ret = (LifecycleControllerInterface) ct.newInstance();
                 
             } else if (MessageListenerWrapper.class.isAssignableFrom(handlerClass)) {
-                ret = new DefaultLifecycleProvider(handlerClass);
+                ret = new DefaultLifecycleController(handlerClass);
             } else {
                 throw new InstantiationException("Specified MessageListener : ".concat(className).concat(" does not inherit from javax.jms.MessageListener !"));
             }

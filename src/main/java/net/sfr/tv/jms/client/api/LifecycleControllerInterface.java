@@ -29,7 +29,7 @@ import net.sfr.tv.exceptions.ResourceInitializerException;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public interface LifecycleProviderInterface {
+public interface LifecycleControllerInterface {
 
     /**
      * Starts the message listener
