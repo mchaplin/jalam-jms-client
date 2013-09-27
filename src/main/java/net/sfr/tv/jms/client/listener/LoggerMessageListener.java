@@ -29,7 +29,7 @@ public class LoggerMessageListener implements MessageListenerWrapper {
             LOGGER = Logger.getLogger(LoggerMessageListener.class);
         }
         
-        outputType = System.getProperty("listener.output.type");
+        outputType = System.getProperty("listener.output.type", "FULL");
     }
     
     @Override
