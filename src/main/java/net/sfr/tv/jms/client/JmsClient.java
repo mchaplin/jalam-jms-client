@@ -15,7 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
-import net.sfr.tv.jms.cnxmgt.ConnectionManager;
+import net.sfr.tv.jms.cnxmgt.AbstractConnectionManager;
 import net.sfr.tv.jms.client.context.JndiServerDescriptor;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;
@@ -26,6 +26,8 @@ import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
+import net.sfr.tv.jms.cnxmgt.InboundConnectionManager;
+import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
 /**
@@ -41,7 +43,7 @@ public class JmsClient implements Runnable {
     public final Object monitor = new Object();    
     
     /** Stateful JMS connection managers : Handles connection/failover for a logical group of JMS servers. */
-    private Map<String, ConnectionManager> cnxManagers;
+    private Map<String, AbstractConnectionManager> cnxManagers;
     
     /** JMS listener class */
     private Class listenerClass;
@@ -53,7 +55,8 @@ public class JmsClient implements Runnable {
      * 
      * Constructor.
      * 
-     * @param servers               JMS servers list, grouped by logical group.
+     * @param jndiProviderConfig    References available JNDI servers & associated credentials.
+     * @param preferredServer       Preferred server alias.
      * @param destination           JMS destination JNDI name
      * @param isTopicSubscription   Topic subscription flag
      * @param isDurableSubscription Durable subscription flag
@@ -62,11 +65,10 @@ public class JmsClient implements Runnable {
      * @param selector              JMS selector
      * @param listenerClassName     JMS listener class name
      * @param cnxFactoryJndiName    JMS connection factory JNDI name
-     * @param login                 JMS login
-     * @param password              JMS password
      */
     public JmsClient(
-            Map<String, Set<JndiServerDescriptor>> servers, 
+            JndiProviderConfiguration jndiProviderConfig,
+            String preferredServer,
             String destination, 
             Boolean isTopicSubscription, 
             Boolean isDurableSubscription, 
@@ -74,12 +76,8 @@ public class JmsClient implements Runnable {
             String subscriptionBaseName, 
             String selector, 
             String listenerClassName, 
-            String cnxFactoryJndiName, 
-            String login, 
-            String password) throws ResourceInitializerException {
+            String cnxFactoryJndiName) throws ResourceInitializerException {
             
-    
-
         try {
             listenerWrapper = instantiateListenerWrapper(listenerClassName);
             listenerClass = ClassLoader.getSystemClassLoader().loadClass(listenerClassName);
@@ -93,14 +91,14 @@ public class JmsClient implements Runnable {
             LOGGER.info("ClientID : ".concat(clientId));
             LOGGER.info("Subscription base name : ".concat(subscriptionBaseName != null ? subscriptionBaseName : ""));
             LOGGER.info("Filter : ".concat(selector != null ? selector : ""));
-            LOGGER.info("Servers groups : ".concat(String.valueOf(servers.size())));
+            LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
         }
 
-        cnxManagers = new TreeMap<String, ConnectionManager>();
+        cnxManagers = new TreeMap<String, AbstractConnectionManager>();
 
-        for (String group : servers.keySet()) {
+        for (String group : jndiProviderConfig.getGroups()) {
             try {
-                ConnectionManager cnxManager = new ConnectionManager(group, servers.get(group), clientId, cnxFactoryJndiName, login, password, listenerWrapper.getListener(listenerClass));
+                InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listenerWrapper.getListener(listenerClass));
                 cnxManager.connect(2);
                 String[] sDestinations = destination.split("\\,");
                 int consumerIdx = 0;
@@ -121,7 +119,7 @@ public class JmsClient implements Runnable {
         
         // START MESSAGE DELIVERY
         try {
-            for (ConnectionManager cnxManager : cnxManagers.values()) {
+            for (AbstractConnectionManager cnxManager : cnxManagers.values()) {
                 cnxManager.start();
             }
         } catch (JMSException ex) {
@@ -199,7 +197,7 @@ public class JmsClient implements Runnable {
      */
     public void shutdown() {
         
-        for (ConnectionManager cnxManager : cnxManagers.values()) {
+        for (AbstractConnectionManager cnxManager : cnxManagers.values()) {
             cnxManager.disconnect();
         }
         

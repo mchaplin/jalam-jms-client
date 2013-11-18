@@ -15,7 +15,6 @@
  */
 package net.sfr.tv.jms.cnxmgt;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -24,13 +23,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
-import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.jms.client.context.JmsContext;
 import net.sfr.tv.jms.client.context.JndiServerDescriptor;
 import net.sfr.tv.jms.client.context.JmsSubscription;
-import net.sfr.tv.jms.client.context.JmsSubscriptionDescriptor;
+import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
 /**
@@ -38,9 +36,9 @@ import org.apache.log4j.Logger;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class ConnectionManager implements ExceptionListener {
+public abstract class AbstractConnectionManager implements ExceptionListener {
     
-    private static final Logger LOGGER = Logger.getLogger(ConnectionManager.class);
+    private static final Logger LOGGER = Logger.getLogger(AbstractConnectionManager.class);
     
     private String name;
     
@@ -50,11 +48,8 @@ public class ConnectionManager implements ExceptionListener {
     /** JMS ClientID */
     private String clientId;
     
-    /** JMS login */
-    private String login;
-    
-    /** JMS password */
-    private String password;
+    /** JMS credentials */
+    private Credentials credentials;
         
     /** Configuration reference */
     private Set<JndiServerDescriptor> availableServers;
@@ -62,30 +57,33 @@ public class ConnectionManager implements ExceptionListener {
     private JndiServerDescriptor activeServer;
     
     /** Currently used JMS resources */
-    private JmsContext context;
+    protected JmsContext context;
     
     /** Current JNDI context */
-    private Context jndiContext;
-    
+    protected Context jndiContext;
+        
     /** ExecutorService used for periodic JMS connect/subscribe tasks */
-    private ScheduledExecutorService scheduler;
+    protected ScheduledExecutorService scheduler;
     
-    /** TODO : Add support for a dedicated listener per subscription. JMS2 supports multiple listener instance.*/
-    private MessageListener listener;
-    
-    public ConnectionManager(String name, Set<JndiServerDescriptor> servers, String clientId, String cnxFactoryJndiName, String login, String password, MessageListener listener) {
+    public AbstractConnectionManager(String name, Set<JndiServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
         
         this.name = name;
         this.clientId = clientId;
         this.cnxFactoryJndiName = cnxFactoryJndiName;
-        this.login = login;
-        this.password = password;
-        this.listener = listener;
+        this.credentials = credentials;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         
         // Try with 1st server. TODO : Optimize and round-robin
         this.availableServers = servers;
         this.activeServer = servers.iterator().next();
+        if (preferredServer != null && preferredServer.trim().length() != 0) {
+            for (JndiServerDescriptor desc : servers) {
+                if (desc.getAlias().equals(preferredServer)) {
+                    activeServer = desc;
+                    break;
+                }
+            }
+        }
 
         lookup(activeServer, 2);
         
@@ -123,7 +121,7 @@ public class ConnectionManager implements ExceptionListener {
         try {
             while (futureContext == null || (context = futureContext.get()) == null) {
                 // reschedule a task
-                ct = new ConnectTask(jndiContext, clientId, cnxFactoryJndiName, login, password, this);
+                ct = new ConnectTask(jndiContext, clientId, cnxFactoryJndiName, credentials, this);
                 futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
                 initConnect = false;
             }
@@ -133,36 +131,6 @@ public class ConnectionManager implements ExceptionListener {
         } catch (ExecutionException ex) {
             LOGGER.error(ex.getMessage(), ex);
         }
-    }
-    
-    
-    /**
-     * Subscribe to a JMS destination.
-     * 
-     * @param metadata  Subscription metadata.
-     * @param delay     Periodic attempts delay.
-     */
-    public final void subscribe(JmsSubscriptionDescriptor metadata, long delay) {
-        ScheduledFuture<JmsContext> futureContext = null;
-        SubscribeTask ct;
-        boolean initConnect = true;
-        try {
-            while (futureContext == null || (context = futureContext.get()) == null) {
-                // reschedule a task
-                ct = new SubscribeTask(context, metadata, listener);
-                futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
-                initConnect = false;
-            }
-            
-        } catch (InterruptedException ex) {
-            LOGGER.error(ex.getMessage(), ex);
-        } catch (ExecutionException ex) {
-            LOGGER.error(ex.getMessage(), ex);
-        }
-    }
-    
-    public final void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector) {
-        subscribe(new JmsSubscriptionDescriptor(destination, isTopicSubscription, isDurableSubscription, subscriptionBaseName, selector), 2);
     }
     
     /**
@@ -214,15 +182,8 @@ public class ConnectionManager implements ExceptionListener {
      *  <li> Session
      * </ul>
      */
-    public final void disconnect() {
-        
-        // UNSUBSCRIBE
-        if (context.getSubscriptions() != null) {
-            for (JmsSubscription subscription : context.getSubscriptions()) {
-                unsubscribe(subscription, context.getSession());
-            }   
-        }
-
+    public void disconnect() {
+      
         // TERMINATE SESSION
         if (context.getSession() != null) {
             try {
@@ -249,11 +210,6 @@ public class ConnectionManager implements ExceptionListener {
         LOGGER.warn("onException : ".concat(jmse.getMessage()));
         
         if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
-            // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
-            Set<JmsSubscriptionDescriptor> subscriptionsMeta = new HashSet<JmsSubscriptionDescriptor>();
-            for (JmsSubscription subscription : context.getSubscriptions()) {
-                subscriptionsMeta.add(subscription.getMetadata());
-            }
 
             // BLACKLIST ACTIVE SERVER
             LOGGER.error("Active Server not available anymore ! ".concat(activeServer.getProviderUrl()));
@@ -271,21 +227,7 @@ public class ConnectionManager implements ExceptionListener {
             LOGGER.info("Group : ".concat(name).concat(" , JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
 
             // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
-            connect(2);
-
-            // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
-            for (JmsSubscriptionDescriptor meta : subscriptionsMeta) {
-                subscribe(meta, 5);
-            }
-
-            try {
-                start();
-            } catch (JMSException ex) {
-                LOGGER.error("Unable to start connection !", ex);
-                for (JmsSubscription subscription : context.getSubscriptions()) {
-                    unsubscribe(subscription, context.getSession());
-                }
-            }   
+            connect(2);   
         }
     }
 

@@ -38,8 +38,14 @@ public class LoggerMessageListener implements MessageListenerWrapper {
         try {
 
             if (!outputType.equals("BODY")) {
-                LOGGER.info("Received message : ".concat(msg.getJMSMessageID() != null ? msg.getJMSMessageID() : "(unknown ID)").concat(", type : ").concat(msg.getJMSType() != null ? msg.getJMSType() : "(unknown type)").concat(", tstamp : ").concat(String.valueOf(msg.getJMSTimestamp())).concat(", redelivery ? ").concat(String.valueOf(msg.getJMSRedelivered())));
-
+                LOGGER.info("Received message :: ID : "
+                        .concat(msg.getJMSMessageID() != null ? msg.getJMSMessageID() : "(?)")
+                        .concat(", type : ").concat(msg.getJMSType() != null ? msg.getJMSType() : "(?)")
+                        .concat(", tstamp : ").concat(String.valueOf(msg.getJMSTimestamp()))
+                        .concat(", expiration : ").concat(String.valueOf(msg.getJMSExpiration()))
+                        .concat(", delivery mode ? ").concat(String.valueOf(msg.getJMSDeliveryMode()))
+                        .concat(", redelivery ? ").concat(String.valueOf(msg.getJMSRedelivered())));
+                
                 Enumeration enm = msg.getPropertyNames();
                 String prop;
                 String val;

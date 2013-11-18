@@ -29,7 +29,8 @@ public enum CliArgs {
     DURABLE("-p"),
     FILTER("-f"),
     UNSUBSCRIBE("-u"),
-    CONNECTION_FACTORY("-cf");
+    CONNECTION_FACTORY("-cf"),
+    PREFERRED_SERVER("-t");
     
     private String value;
 

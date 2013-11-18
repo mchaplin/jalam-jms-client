@@ -15,9 +15,13 @@
  */
 package net.sfr.tv.jms.cnxmgt;
 
+import java.util.Hashtable;
 import java.util.concurrent.Callable;
 import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import net.sfr.tv.jms.client.context.JndiServerDescriptor;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -25,6 +29,8 @@ import net.sfr.tv.jms.client.context.JndiServerDescriptor;
  */
 public class JndiLookupTask implements Callable<Context> {
 
+    private static final Logger LOGGER = Logger.getLogger(JndiLookupTask.class);
+    
     private JndiServerDescriptor jndiServer;
     
     public JndiLookupTask(JndiServerDescriptor jndiServer) {
@@ -33,6 +39,20 @@ public class JndiLookupTask implements Callable<Context> {
     
     @Override
     public Context call() throws Exception {
-        return ContextFactory.initializeJndiContext(jndiServer);
+        
+        // Set up JNDI context & lookup destination. Interrupt in case of failure.
+        Context ctx = null;
+        
+        Hashtable props = new Hashtable(3);
+        props.put(Context.PROVIDER_URL, jndiServer.getProviderUrl());
+        props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+        props.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        try {
+            ctx = new InitialContext(props);
+        } catch (NamingException ex) {
+            LOGGER.error("JNDI Context initialization failure ! ", ex);
+        }
+        return ctx;
     }
+    
 }

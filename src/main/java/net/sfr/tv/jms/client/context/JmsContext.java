@@ -39,7 +39,6 @@ public class JmsContext {
     private Context jndiContext;
     private Connection cnx = null;
     private Session session;
-    private Set<JmsSubscription> subscriptions = null;
     
     public JmsContext(Context jndiContext, Connection cnx, Session session) {
         this.jndiContext = jndiContext;
@@ -63,15 +62,6 @@ public class JmsContext {
     public Session getSession() {
         return session;
     }
-
-    public void addSubscription(JmsSubscription subscription) {
-        if (subscriptions == null) {
-            subscriptions = new HashSet<JmsSubscription>();
-        }
-        subscriptions.add(subscription);
-    }
     
-    public Set<JmsSubscription> getSubscriptions() {
-        return subscriptions;
-    }
+
 }

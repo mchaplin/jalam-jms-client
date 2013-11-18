@@ -15,19 +15,14 @@
  */
 package net.sfr.tv.jms.client;
 
-import net.sfr.tv.jms.client.context.JndiServerDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -42,12 +37,12 @@ import org.apache.log4j.PropertyConfigurator;
  *  <li> Registering SIGTERM shutdown hook.
  * </ul>
  * 
- * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
+ * @author matthieu.chaplin@sfr.com
  */
 public class Bootstrap {
 
-    private static final String VERSION = "1.0.0";
-    private static final List<String> systemProperties = new ArrayList<String>();
+    private static final String VERSION = "1.1.0";
+    private static final List<String> systemProperties = new ArrayList<>();
 
     static {
         //systemProperties.add("sun.java.command");
@@ -91,8 +86,9 @@ public class Bootstrap {
             String destination = null;
             String clientId = null;
             String subscriptionName = null;
+            String preferredServer = null;
             String selector = "";
-            String jndiConnectionFactory = "ConsumerConnectionFactory";
+            String jndiConnectionFactory = "ConnectionFactory";
             Boolean isTopicSubscription = Boolean.TRUE;
             Boolean isDurableSubscription = Boolean.FALSE;
             Boolean unsubscribeAndExit = Boolean.FALSE;
@@ -122,6 +118,8 @@ public class Bootstrap {
                     case CONNECTION_FACTORY:
                         jndiConnectionFactory = args[++i];
                         break;
+                    case PREFERRED_SERVER:
+                        preferredServer = args[++i];
                     case FILTER:
                         while (++i < args.length) {
                             selector += args[i].concat(" ");
@@ -138,9 +136,14 @@ public class Bootstrap {
             if (destination == null || subscriptionName == null) {
                 LOGGER.info("Usage : ");
                 LOGGER.info("\tjava (-Dhandler.class=your.listener) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
+                LOGGER.info("\t -d  : Destination JNDI name. Mandatory.");
+                LOGGER.info("\t -c  : JMS ClientID.");
+                LOGGER.info("\t -s  : JMS subscription name.");
+                LOGGER.info("\t -f  : JMS selector.");
                 LOGGER.info("\t -q  : Destination is a queue. Topic is default.");
                 LOGGER.info("\t -p  : Create a persistent ('durable') subscription. Default is false.");
                 LOGGER.info("\t -u  : Unsubscribe an active durable subscription, then exit.");
+                LOGGER.info("\t -t  : Target server alias. Otherwise randomly connects to one of the configured servers.");
                 LOGGER.info("\t -cf : JNDI Connection Factory name. Default 'ConsumerConnectionFactory'.");
                 LOGGER.info("\n");
                 LOGGER.info("Examples : ");
@@ -151,7 +154,7 @@ public class Bootstrap {
             }
             
             if (clientId == null || clientId.trim().equals("")) {
-                clientId = "jms-client@".concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));//.concat("-").concat(String.valueOf(new Date().getTime())).replaceAll("\\.", "_"));
+                clientId = "jalam@".concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));//.concat("-").concat(String.valueOf(new Date().getTime())).replaceAll("\\.", "_"));
             }
 
             // PARSE jms.properties FILE TO GET A LIST OF KNOWN SERVERS                        
@@ -169,39 +172,7 @@ public class Bootstrap {
             }
             
             String[] groups = props.getProperty("config.groups", "").split("\\,");
-
-            String serverAlias;
-            Set<String> keys = props.stringPropertyNames();
-            //int pos;
-            String prefix;
-            JndiServerDescriptor server;
-
-            Map<String, Set<JndiServerDescriptor>> servers = new HashMap<String, Set<JndiServerDescriptor>>();
-            for (String group : groups) {
-                LOGGER.debug("Group : " + group);
-                prefix = group.concat(!group.trim().equals("") ? "." : "");
-                group = !group.equals("") ? group : "default";
-                LOGGER.debug("Prefix : " + prefix + " , Group : " + group);
-                for (String key : keys) {
-                    if (key.startsWith(group)) {
-                        serverAlias = key.startsWith("jms.server") ? key.split("\\.")[2] : key.split("\\.")[3];
-                        LOGGER.debug("Server alias : " + serverAlias);
-
-                        if (servers.get(group) == null) {
-                            servers.put(group, new HashSet<JndiServerDescriptor>());
-                        }
-                        server = new JndiServerDescriptor(
-                            props.getProperty(prefix.concat("jms.server.").concat(serverAlias).concat(".host")),
-                            Integer.valueOf(props.getProperty(prefix.concat("jms.server.").concat(serverAlias).concat(".port"))));
-                                
-                        boolean duplicate = servers.get(group).add(server);
-                        LOGGER.info("Group ".concat(group).concat(duplicate ? ". Added server : " : ". Skipped duplicate : ").concat(server.getProviderUrl()).concat(" "));
-                    }
-                }
-            }
-
-            String login = props.getProperty("jms.login", "guest");
-            String password = props.getProperty("jms.password", "guest");
+            JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(props, null);
             
             // LOG RUNTIME DATA
             Properties system = System.getProperties();
@@ -214,13 +185,13 @@ public class Bootstrap {
             }
 
             if (unsubscribeAndExit) {
-                final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory, login, password);
+                final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
                 client.shutdown();
                 System.exit(0);
             }
             
             // BOOTSTRAP
-            final JmsClient client = new JmsClient(servers, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory, login, password);
+            final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
             Thread clientThread = new Thread(client);
             clientThread.start();
             
@@ -235,15 +206,9 @@ public class Bootstrap {
                 }
             });
 
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException | IOException | ResourceInitializerException ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
-        } catch (IOException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);            
-        } catch (ResourceInitializerException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);            
         }
     }
 }

@@ -16,28 +16,43 @@
 package net.sfr.tv.jms.client.context;
 
 /**
- * JNDI server URL.
+ * JNDI server URI.
  * 
  * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
  */
 public class JndiServerDescriptor {
  
+    private String alias;
+    
     private String host;
     
     private Integer port;
     
-    public JndiServerDescriptor(String host, Integer port) {
+    public JndiServerDescriptor(String alias, String host, Integer port) {
+        this.alias = alias;
         this.host = host;
         this.port = port;
     }
+
+    public String getAlias() {
+        return alias;
+    }
     
     /**
+     * Returns the JNDI provider URL
      * 
      * @return 
      */
     public String getProviderUrl() {
         return "jnp://".concat(host).concat(":").concat(port.toString());
     }
+
+    @Override
+    public String toString() {
+        return "JNDI provider : ".concat(alias).concat(" -> URL : ").concat(getProviderUrl());
+    }
+    
+    
 
     @Override
     public boolean equals(Object obj) {
