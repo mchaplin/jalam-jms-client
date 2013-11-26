@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import net.sfr.tv.jms.client.context.JndiServerDescriptor;
+import net.sfr.tv.jms.model.JndiServerDescriptor;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 

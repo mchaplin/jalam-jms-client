@@ -16,18 +16,15 @@
 package net.sfr.tv.jms.client;
 
 import net.sfr.tv.jms.cnxmgt.AbstractConnectionManager;
-import net.sfr.tv.jms.client.context.JndiServerDescriptor;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
 import net.sfr.tv.jms.cnxmgt.InboundConnectionManager;
-import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
 /**
