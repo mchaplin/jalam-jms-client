@@ -47,8 +47,8 @@
     </dependency>
     <dependency>
       <groupId>net.sfr.tv</groupId>  
-      <artifactId>jms-cnxmgt</artifactId>  
-      <version>1.0-SNAPSHOT</version>  
+      <artifactId>jalco</artifactId>  
+      <version>1.0-20131129.180609-1</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.javaee</groupId>
