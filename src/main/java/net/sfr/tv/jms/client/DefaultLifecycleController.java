@@ -18,6 +18,7 @@ package net.sfr.tv.jms.client;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
@@ -41,7 +42,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
         listeners = new HashMap<Integer,MessageListenerWrapper>();
         listeners.put(insertIdx++, createListener(listenerClass));
     }
-    
+        
     @Override
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException {
         if (insertIdx <= retrievalIdx) {
@@ -51,6 +52,15 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
         MessageListenerWrapper ret = listeners.get(retrievalIdx++);
         LOGGER.info("Will be using listener instance : " + ret.toString());
         return ret;
+    }
+    
+    /**
+     * Register a new listener of the class specified and add it to the list of listeners
+     * @param listenerClass class of new listener to be instantiated and added.
+     * @throws ResourceInitializerException 
+     */
+    public void registerListener(Class listenerClass) throws ResourceInitializerException {
+       listeners.put(insertIdx++, createListener(listenerClass));
     }
 
     private MessageListenerWrapper createListener(Class listenerClass) throws ResourceInitializerException {
