@@ -15,6 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -40,6 +41,8 @@ import org.apache.log4j.PropertyConfigurator;
  * @author matthieu.chaplin@sfr.com
  */
 public class Bootstrap {
+   private static final String DEFAULT_JMS_PROPERTIES_FILEPATH = "jms.properties";
+   private static final String DEFAULT_LOG4J_PROPERTIES_FILEPATH = "log4j.properties";
 
     private static final String VERSION = "1.1.0";
     private static final List<String> systemProperties = new ArrayList<>();
@@ -67,12 +70,11 @@ public class Bootstrap {
             Properties props = new Properties();
             // TRY TO LOAD LOG4J PROPERTIES. (OTHERWISE, IT WILL BE THE RESPONSABILITY OF THE TARGET WRAPPER)
             try {
-                //InputStream is = Bootstrap.class.getResourceAsStream("/log4j.properties");
-                InputStream is = Bootstrap.class.getResourceAsStream("log4j.properties");
+                InputStream is = Bootstrap.class.getResourceAsStream("/".concat(DEFAULT_LOG4J_PROPERTIES_FILEPATH));
                 if (is != null) {
                     props.load(is);
                 } else {
-                    props.load(new FileInputStream("log4j.properties"));
+                    props.load(new FileInputStream(DEFAULT_LOG4J_PROPERTIES_FILEPATH));
                 }
                 PropertyConfigurator.configure(props);
                 
@@ -88,7 +90,7 @@ public class Bootstrap {
             String subscriptionName = null;
             String preferredServer = null;
             String selector = "";
-            String jndiConnectionFactory = "ConnectionFactory";
+            String jndiConnectionFactory = "ConsumerConnectionFactory";
             Boolean isTopicSubscription = Boolean.TRUE;
             Boolean isDurableSubscription = Boolean.FALSE;
             Boolean unsubscribeAndExit = Boolean.FALSE;
@@ -130,7 +132,7 @@ public class Bootstrap {
                 }
             }
 
-            String handlerClassName = System.getProperty("handler.class", "net.sfr.tv.jms.client.listener.LoggerMessageListener");
+            String lifecycleControllerClassName = System.getProperty("handler.class", "net.sfr.tv.jms.client.listener.LoggerMessageListener");
 
             // CHECK FOR ARGUMENTS CONSISTENCY
             if (destination == null || subscriptionName == null) {
@@ -160,7 +162,7 @@ public class Bootstrap {
             // PARSE jms.properties FILE TO GET A LIST OF KNOWN SERVERS                        
             props = new Properties();
             try {
-                InputStream is = Bootstrap.class.getResourceAsStream("/jms.properties");
+                InputStream is = Bootstrap.class.getResourceAsStream("/".concat(DEFAULT_JMS_PROPERTIES_FILEPATH));
                 if (is != null) {
                     props.load(is);
                 } else {
@@ -176,6 +178,7 @@ public class Bootstrap {
             
             // LOG RUNTIME DATA
             Properties system = System.getProperties();
+            LOGGER.info("******* System Properties **********\t");
             if (system != null && !system.isEmpty()) {
                 for (String prop : systemProperties) {
                     if (prop != null) { // CA FAIT UN PEU BCP, MAIS BON..
@@ -183,15 +186,16 @@ public class Bootstrap {
                     }
                 }
             }
+            LOGGER.info("************************************\t");
 
             if (unsubscribeAndExit) {
-                final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
+                final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, lifecycleControllerClassName, jndiConnectionFactory);
                 client.shutdown();
                 System.exit(0);
             }
             
             // BOOTSTRAP
-            final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, handlerClassName, jndiConnectionFactory);
+            final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, isDurableSubscription, clientId, subscriptionName, selector, lifecycleControllerClassName, jndiConnectionFactory);
             Thread clientThread = new Thread(client);
             clientThread.start();
             
