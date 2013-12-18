@@ -72,6 +72,17 @@ becomes unavailable.
     datacenter2.jms.server.server2.host=server2.datacenter2.organization.com
     datacenter2.jms.server.server2.port=7676
 
+Listener/Destination Setup :
+----------------------------
+
+To use a listener other than the default, the names of the listener classes and their destinations must be specified in the jms.properties file. Multiple listeners and multiple destinations are specified in comma separated strings:
+
+    # Class names of listeners
+    config.listeners=net.sfr.tv.listener.TopicListener1,net.sfr.tv.listener.TopicListener2,net.sfr.tv.listener.TopicListener3
+    # Destinations
+    net.sfr.tv.listener.TopicListener1.destinations=/topic/1
+    net.sfr.tv.listener.TopicListener2.destinations=/topic/1,/topic/2
+    net.sfr.tv.listener.TopicListener3.destinations=/topic/3
 	
 Usage :
 ===============================================================================
