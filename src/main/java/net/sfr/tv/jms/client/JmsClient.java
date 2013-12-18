@@ -31,7 +31,8 @@ import org.apache.log4j.Logger;
  * Main client class. Implements the monitor pattern, run/shutdown lifecycle
  * methods.
  *
- * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
+ * @author matthieu.chaplin@sfr.com
+ * @author scott.messner.prestataire@sfr.com
  */
 public class JmsClient implements Runnable {
 
@@ -137,7 +138,7 @@ public class JmsClient implements Runnable {
    }
 
    /**
-    * Instantiate the LifecycleControllerInterface with the specified class
+    * Instantiate the LifecycleControllerInterface with the specified classname
     *
     * @see net.sfr.tv.jms.client.wrapper.ListenerWrapper
     *
