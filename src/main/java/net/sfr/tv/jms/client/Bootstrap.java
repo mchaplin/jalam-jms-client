@@ -45,7 +45,7 @@ public class Bootstrap {
    private static final String DEFAULT_LOG4J_PROPERTIES_FILEPATH = "log4j.properties";
 
    private static final String DEFAULT_LISTENER_CLASS = "net.sfr.tv.jms.client.listener.LoggerMessageListener";
-   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifeCycleController";
+   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifecycleController";
 
    private static final String VERSION = "1.1.0";
    private static final List<String> systemProperties = new ArrayList<>();
