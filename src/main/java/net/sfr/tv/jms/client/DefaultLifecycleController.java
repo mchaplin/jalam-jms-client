@@ -159,7 +159,8 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
 
    /**
     * Recover the jms.properties file which should be stored in the conf
-    * directory TODO: Add support for supplying the location of the
+    * directory
+    * TODO: SMM: Add support for supplying the location of the
     * jms.properties.
     *
     * @return

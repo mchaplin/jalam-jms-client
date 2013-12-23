@@ -24,7 +24,7 @@ import net.sfr.tv.exceptions.ResourceInitializerException;
  * Allows : 
  * <ul>
  *  <li> Extra service initialization
- *  <li> TODO : Multiple parallel listeners
+ *  <li> Multiple parallel listeners
  * </ul>
  * 
  * @author matthieu.chaplin@sfr.com
