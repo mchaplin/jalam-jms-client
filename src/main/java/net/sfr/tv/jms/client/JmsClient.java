@@ -112,17 +112,21 @@ public class JmsClient implements Runnable {
 
       for (String group : jndiProviderConfig.getGroups()) {
          try {
-            InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), lifecycleController.getListener(listenerClass));
-            cnxManager.connect(2);
-            String[] sDestinations = destination.split("\\,");
-            int consumerIdx = 0;
-            String subscriptionName;
-            for (String sdst : sDestinations) {
-               subscriptionName = subscriptionBaseName.concat(sDestinations.length > 1 ? "-" + ++consumerIdx : "");
-               cnxManager.subscribe(sdst, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
+            for (MessageListenerWrapper listener : lifecycleController.getListeners()) {
+               String clientListenerId = clientId.concat(listener.getClass().getCanonicalName());
+               //InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+               InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientListenerId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+               cnxManager.connect(2);
+               
+               int consumerIdx = 0;
+               String subscriptionName;
+               for (String dest : lifecycleController.getDestinations(listener.getClass())) {
+                  subscriptionName = listener.getName().concat("-".concat(dest).concat("-" + ++consumerIdx));
+                  cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
+               }
+               cnxManagers.put(group, cnxManager);
             }
-            cnxManagers.put(group, cnxManager);
-         } catch (ResourceInitializerException ex) {
+         } catch (Exception ex) {
             LOGGER.error("Unable to start a listener/context binded to : ".concat(group), ex);
          }
       }

@@ -19,7 +19,7 @@ public class LoggerMessageListener implements MessageListenerWrapper {
     private String name;
     
     private String outputType;
-    
+        
     public LoggerMessageListener() {
         name = LoggerMessageListener.class.getName();
         String loggerName = System.getProperty("listener.logger.name");

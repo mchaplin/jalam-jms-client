@@ -45,7 +45,7 @@ public class Bootstrap {
    private static final String DEFAULT_LOG4J_PROPERTIES_FILEPATH = "log4j.properties";
 
    private static final String DEFAULT_LISTENER_CLASS = "net.sfr.tv.jms.client.listener.LoggerMessageListener";
-   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifeCycleController";
+   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifecycleController";
 
    private static final String VERSION = "1.1.0";
    private static final List<String> systemProperties = new ArrayList<>();
@@ -137,7 +137,7 @@ public class Bootstrap {
          // CHECK FOR ARGUMENTS CONSISTENCY
          if (destination == null || subscriptionName == null) {
             LOGGER.info("Usage : ");
-            LOGGER.info("\tjava (-Dhandler.class=your.lifeCycleController) (-Dlistener.class=your.MessageListener) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
+            LOGGER.info("\tjava (-Dhandler.class=[your.lifeCycleController]) (-Dlistener.class=[your.MessageListener]) -jar jalam.jar (-d [destination]) (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
             LOGGER.info("\t -d  : Destination JNDI name. Mandatory.");
             LOGGER.info("\t -c  : JMS ClientID.");
             LOGGER.info("\t -s  : JMS subscription name.");

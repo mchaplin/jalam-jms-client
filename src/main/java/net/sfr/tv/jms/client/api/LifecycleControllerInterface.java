@@ -61,5 +61,10 @@ public interface LifecycleControllerInterface {
      * @return 
      */
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException;
-    
+ 
+    /**
+     * @param listenerClass the class for which to retreive destinations
+     * @return an array of destinations associated with the specified listener
+     */
+    public String[] getDestinations(Class listenerClass);
 }

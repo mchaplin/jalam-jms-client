@@ -30,8 +30,10 @@ import net.sfr.tv.jms.client.listener.LoggerMessageListener;
 import org.apache.log4j.Logger;
 
 /**
+ * The default implementation for the LifecycleControllerInterface
  *
  * @author matthieu.chaplin@sfr.com
+ * @author scott.messner.prestataire@sfr.com
  */
 public class DefaultLifecycleController implements LifecycleControllerInterface {
 
@@ -39,7 +41,14 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
 
    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleController.class);
 
+   /**
+    * Map of listeners to be managed by the controller
+    */
    private Map<Integer, MessageListenerWrapper> listeners;
+   /**
+    * Map of destinations to be tied to each listener
+    */
+   private Map<Class, String[]> destinations;
 
    private int insertIdx = 0;
 
@@ -63,9 +72,10 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
     * @throws ResourceInitializerException
     */
    public DefaultLifecycleController() throws ResourceInitializerException {
-      listeners = new HashMap<Integer, MessageListenerWrapper>();
+      listeners = new HashMap<>();
+      destinations = new HashMap<>();
       Properties props = LoadJmsProperties();
-      ConfigureListeners(props);
+      configureListeners(props);
    }
 
    @Override
@@ -106,7 +116,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    public Collection<MessageListenerWrapper> getListeners() {
       return listeners.values();
    }
-
+   
    @Override
    public void run() {
    }
@@ -121,15 +131,15 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    /**
     * Find and load listener classes specified in the given properties object.
     * Finally, choose the first class found as the listener class (defaulting if
-    * needed) TODO: SMM Add support for multiple listeners (this requires
-    * linking a listener to it's jms destinations).
+    * needed)
     *
     * @param props
     * @throws ResourceInitializerException if any of the listenerClasses
     * supplied could not be found.
     */
-   private void ConfigureListeners(Properties props) throws ResourceInitializerException {
+   private void configureListeners(Properties props) throws ResourceInitializerException {
       String listenersString = props.getProperty("config.listeners", DEFAULT_LISTENER_CLASS.getName());
+      LOGGER.debug("listenersString: ".concat(listenersString));
       String[] listenerClassNames = listenersString.split("\\,");
       Class[] listenerClasses = new Class[listenerClassNames.length];
       try {
@@ -140,15 +150,11 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
          LOGGER.error("Failure in loading the listeners", e);
       }
 
-      Class listenerClass;
-      if (listenerClasses[0] != null) {
-         listenerClass = listenerClasses[0];
-      } else {
-         listenerClass = DEFAULT_LISTENER_CLASS;
+      for (Class listenerClass : listenerClasses) {
+         configureDestinations(props, listenerClass);
+         listeners.put(insertIdx++, createListener(listenerClass));
+         LOGGER.debug("Adding Listener class: ".concat(listenerClass.getName()));
       }
-      LOGGER.debug("Using Listener class: ".concat(listenerClass.getName()));
-
-      listeners.put(insertIdx++, createListener(listenerClass));
    }
 
    /**
@@ -174,5 +180,25 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
          LOGGER.error("Unable to find jms.properties server configuration file, read the doc !", e);
       }
       return jmsProps;
+   }
+
+   /**
+    * Fetch and associate destinations with the specified listener
+    * @param props Property file where the destinations can be found
+    * @param listenerClass The listener for which to fetch and associate dests.
+    * @throws ResourceInitializerException 
+    */
+   private void configureDestinations(Properties props, Class listenerClass) throws ResourceInitializerException  {
+      String destinationsString = props.getProperty(listenerClass.getName().concat(".destinations"), null);
+      if (destinationsString == null) {
+         throw new ResourceInitializerException(new Throwable("The destinations for ".concat(listenerClass.getName()).concat(" could not be found.")));
+      }
+      destinations.put(listenerClass, destinationsString.split("\\,"));
+      LOGGER.debug("Added destination: ".concat(destinationsString).concat(" for ").concat(listenerClass.getName()));
+   }
+
+   @Override
+   public String[] getDestinations(Class listenerClass) {
+      return destinations.get(listenerClass);
    }
 }
