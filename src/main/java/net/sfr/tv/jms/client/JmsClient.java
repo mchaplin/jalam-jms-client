@@ -99,32 +99,31 @@ public class JmsClient implements Runnable {
          subscriptionBaseName = "";
       }
 
-      if (LOGGER.isInfoEnabled()) {
-         //LOGGER.info("Host : ".concat(host));
-         LOGGER.info("Destination : ".concat(destination));
-         LOGGER.info("ClientID : ".concat(clientId));
-         LOGGER.info("Subscription base name : ".concat(subscriptionBaseName));
-         LOGGER.info("Filter : ".concat(selector != null ? selector : ""));
-         LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
-      }
-
       cnxManagers = new TreeMap<String, AbstractConnectionManager>();
 
       for (String group : jndiProviderConfig.getGroups()) {
          try {
             for (MessageListenerWrapper listener : lifecycleController.getListeners()) {
-               String clientListenerId = clientId.concat(listener.getClass().getCanonicalName());
+               String clientListenerId = group.concat(clientId).concat(listener.getClass().getCanonicalName());
                //InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
-               InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientListenerId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+               InboundConnectionManager cnxManager = new InboundConnectionManager(clientListenerId, jndiProviderConfig.getServersGroup(group), preferredServer, clientListenerId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
                cnxManager.connect(2);
-               
+
                int consumerIdx = 0;
                String subscriptionName;
                for (String dest : lifecycleController.getDestinations(listener.getClass())) {
                   subscriptionName = listener.getName().concat("-".concat(dest).concat("-" + ++consumerIdx));
                   cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
+                  if (LOGGER.isInfoEnabled()) {
+                     //LOGGER.info("Host : ".concat(host));
+                     LOGGER.info("Destination : ".concat(dest));
+                     LOGGER.info("ClientID : ".concat(clientId));
+                     LOGGER.info("Subscription base name : ".concat(subscriptionBaseName));
+                     LOGGER.info("Filter : ".concat(selector != null ? selector : ""));
+                     LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
+                  }
                }
-               cnxManagers.put(group, cnxManager);
+               cnxManagers.put(clientListenerId, cnxManager);
             }
          } catch (Exception ex) {
             LOGGER.error("Unable to start a listener/context binded to : ".concat(group), ex);
@@ -138,6 +137,7 @@ public class JmsClient implements Runnable {
       // START MESSAGE DELIVERY
       try {
          for (AbstractConnectionManager cnxManager : cnxManagers.values()) {
+            LOGGER.info("Starting connection manager : ".concat(cnxManager.getName()));
             cnxManager.start();
          }
       } catch (JMSException ex) {
