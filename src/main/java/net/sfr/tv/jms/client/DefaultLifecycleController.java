@@ -57,15 +57,14 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    }
 
    /**
-    * Jalam 2.0 Requires that listenerClasses are specified in the
-    * jms.properties
+    * No-arg constructor that requires listenerClasses to be specified in the jms.properties
     *
     * @throws ResourceInitializerException
     */
    public DefaultLifecycleController() throws ResourceInitializerException {
       listeners = new HashMap<Integer, MessageListenerWrapper>();
-      Properties props = LoadJmsProperties();
-      ConfigureListeners(props);
+      Properties props = loadJmsProperties();
+      configureListeners(props);
    }
 
    @Override
@@ -128,7 +127,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
     * @throws ResourceInitializerException if any of the listenerClasses
     * supplied could not be found.
     */
-   private void ConfigureListeners(Properties props) throws ResourceInitializerException {
+   private void configureListeners(Properties props) throws ResourceInitializerException {
       String listenersString = props.getProperty("config.listeners", DEFAULT_LISTENER_CLASS.getName());
       String[] listenerClassNames = listenersString.split("\\,");
       Class[] listenerClasses = new Class[listenerClassNames.length];
@@ -158,10 +157,10 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
     *
     * @return
     */
-   private Properties LoadJmsProperties() {
+   private Properties loadJmsProperties() {
       Properties jmsProps = new Properties();
       try {
-         InputStream in = new FileInputStream(new File("conf/jms.properties"));
+         InputStream in = new FileInputStream(new File("jms.properties"));
          jmsProps.load(in);
          in.close();
 
@@ -171,7 +170,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
          }
          LOGGER.info("************************************\t");
       } catch (IOException e) {
-         LOGGER.error("Unable to find jms.properties server configuration file, read the doc !", e);
+         //LOGGER.error("Unable to find jms.properties server configuration file, read the doc !", e);
       }
       return jmsProps;
    }
