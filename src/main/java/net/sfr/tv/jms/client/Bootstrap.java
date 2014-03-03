@@ -15,7 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
-import net.sfr.tv.jms.cnxmgt.JndiProviderConfiguration;
+import net.sfr.tv.jms.model.JndiProviderConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
