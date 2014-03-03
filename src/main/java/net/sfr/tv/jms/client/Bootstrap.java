@@ -44,12 +44,11 @@ public class Bootstrap {
 
    private static final String DEFAULT_JMS_PROPERTIES_FILEPATH = "jms.properties";
    private static final String DEFAULT_LOG4J_PROPERTIES_FILEPATH = "log4j.properties";
+   
+   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifecycleController";
 
-   private static final String DEFAULT_LISTENER_CLASS = "net.sfr.tv.jms.client.listener.LoggerMessageListener";
-   private static final String DEFAULT_LIFECYCLECONTROLLER_CLASS = "net.sfr.tv.jms.client.DefaultLifeCycleController";
-
-   private static final String VERSION = "1.1.0";
-   private static final List<String> systemProperties = new ArrayList<>();
+   private static final String VERSION = "1.2.2";
+   private static final List<String> systemProperties = new ArrayList<String>();
 
    static {
       //systemProperties.add("sun.java.command");
@@ -174,23 +173,24 @@ public class Bootstrap {
             System.exit(1);
          }
 
-         String[] groups = props.getProperty("config.groups", "").split("\\,");
-         String lifecycleControllerClassName = props.getProperty("config.lifecycleControllerClass", DEFAULT_LIFECYCLECONTROLLER_CLASS);
-
-         JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(props, null);
-
          // LOG RUNTIME DATA
          Properties system = System.getProperties();
          LOGGER.info("********** System Properties **********\t");
          if (system != null && !system.isEmpty()) {
             for (String prop : systemProperties) {
                if (prop != null) { // CA FAIT UN PEU BCP, MAIS BON..
-                  LOGGER.info("\t".concat(prop).concat(" : ").concat(system.get(prop) != null ? system.get(prop).toString() : ""));
+                  LOGGER.info("\t".concat(prop).concat(" : ").concat(system.getProperty(prop) != null ? system.getProperty(prop).toString() : ""));
                }
             }
          }
          LOGGER.info("***************************************\t");
 
+         String[] groups = props.getProperty("config.groups", "").split("\\,");
+         String lifecycleControllerClassName = system.getProperty("handler.class") != null ? system.getProperty("handler.class") : 
+                 props.getProperty("config.lifecycleControllerClass", DEFAULT_LIFECYCLECONTROLLER_CLASS);
+
+         JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(props, null);
+         
          if (unsubscribeAndExit) {
             final JmsClient client = new JmsClient(jndiProviderConfig, preferredServer, destination, isTopicSubscription, Boolean.FALSE, clientId, subscriptionName, selector, lifecycleControllerClassName, jndiConnectionFactory);
             client.shutdown();
@@ -213,7 +213,13 @@ public class Bootstrap {
             }
          });
 
-      } catch (NumberFormatException | IOException | ResourceInitializerException ex) {
+      } catch (NumberFormatException ex) {
+         ex.printStackTrace(System.err);
+         System.exit(1);
+      } catch (IOException ex) {
+         ex.printStackTrace(System.err);
+         System.exit(1);
+      } catch (ResourceInitializerException ex) {
          ex.printStackTrace(System.err);
          System.exit(1);
       }

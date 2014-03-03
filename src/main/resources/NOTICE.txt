@@ -1,5 +1,5 @@
-HQ Console
-Copyright 2012,2013 - Société Française de Radiotéléphonie (http://www.sfr.com/)
+Jalam
+Copyright 2012,2013,2014 - Société Française de Radiotéléphonie (http://www.sfr.com/)
 
 This product binary release includes software developed by :
  - The Apache Software Foundation (http://www.apache.org/).

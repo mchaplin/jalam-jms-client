@@ -157,7 +157,7 @@ public class JmsClient implements Runnable {
 
       LifecycleControllerInterface ret = null;
 
-      LOGGER.info("Instantiating handler : ".concat(className));
+      LOGGER.debug("Instantiating handler : ".concat(className));
 
       try {
          // Instantiate MessageListener
