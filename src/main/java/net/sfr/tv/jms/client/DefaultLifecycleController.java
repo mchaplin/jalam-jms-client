@@ -30,7 +30,7 @@ import org.apache.log4j.Logger;
  * @see net.sfr.tv.jms.client.api.LifecycleControllerInterface
  * 
  * @author matthieu.chaplin@sfr.com
- * @author pierre.cheynier@sfr.com
+ * @author pierre.cheynier@sfr.com 
  */
 public class DefaultLifecycleController implements LifecycleControllerInterface {
 
