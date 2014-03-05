@@ -15,7 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
-import net.sfr.tv.jms.cnxmgt.JndiProviderConfiguration;
+import net.sfr.tv.jms.model.JndiProviderConfiguration;
 import net.sfr.tv.jms.cnxmgt.AbstractConnectionManager;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;

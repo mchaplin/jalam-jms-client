@@ -15,7 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
-import net.sfr.tv.jms.cnxmgt.JndiProviderConfiguration;
+import net.sfr.tv.jms.model.JndiProviderConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -223,8 +223,14 @@ public class Bootstrap {
                client.shutdown();
             }
          });
-         
-      } catch (NumberFormatException | IOException | ResourceInitializerException ex) {
+
+      } catch (NumberFormatException ex) {
+         ex.printStackTrace(System.err);
+         System.exit(1);
+      } catch (IOException ex) {
+         ex.printStackTrace(System.err);
+         System.exit(1);
+      } catch (ResourceInitializerException ex) {
          ex.printStackTrace(System.err);
          System.exit(1);
       }
