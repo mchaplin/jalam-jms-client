@@ -1,5 +1,5 @@
 /**
- * Copyright 2012,2013 - SFR (http://www.sfr.com/)
+ * Copyright 2012-2014 - SFR (http://www.sfr.com/)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,15 +44,10 @@ public interface LifecycleControllerInterface {
     public void release();
     
     /**
-     * Creates and return a wrapped listener.
+     * Get all the registered listeners
      * 
-     * @param listenerClass
-     * @return
-     * @throws Exception 
+     * @return 
      */
-    //public ResourceHolderMessageListener createListener(Class listenerClass) throws ResourceInitializerException;
-    
-    
     public Collection<MessageListenerWrapper> getListeners();
     
     /**

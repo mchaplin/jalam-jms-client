@@ -10,8 +10,9 @@ import org.hornetq.core.journal.SequentialFile;
 import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
 
 /**
- *
- * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
+ * A simple message listener, printing message contents to file passed by -Dlistener.file.output
+ * 
+ * @author matthieu.chaplin@sfr.com
  */
 public class FileOutMessageListener implements MessageListenerWrapper {
 

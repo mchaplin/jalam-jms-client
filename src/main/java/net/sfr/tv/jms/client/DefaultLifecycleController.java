@@ -1,5 +1,5 @@
 /**
- * Copyright 2012,2013 - SFR (http://www.sfr.com/)
+ * Copyright 2012-2014 - SFR (http://www.sfr.com/)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,57 +15,54 @@
  */
 package net.sfr.tv.jms.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
-import net.sfr.tv.jms.client.listener.LoggerMessageListener;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * An "embedded" Lifecycle Controller. 
+ * Feel free to create your own to do more sophisticated things ! 
+ * 
+ * @see net.sfr.tv.jms.client.api.LifecycleControllerInterface
+ * 
  * @author matthieu.chaplin@sfr.com
+ * @author pierre.cheynier@sfr.com
  */
 public class DefaultLifecycleController implements LifecycleControllerInterface {
 
-   private final static Class DEFAULT_LISTENER_CLASS = LoggerMessageListener.class;
-
    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleController.class);
 
-   private Map<Integer, MessageListenerWrapper> listeners;
+   private Map<Integer, MessageListenerWrapper> listeners = new HashMap<Integer, MessageListenerWrapper>();;
 
    private int insertIdx = 0;
-
    private int retrievalIdx = 0;
 
    /**
     * Jalam 1.0 Requires the listenerClass to be provided at initialization.
     *
     * @param listenerClass listenerWrapper to use in this controller
+    * 
     * @throws ResourceInitializerException
     */
    public DefaultLifecycleController(Class listenerClass) throws ResourceInitializerException {
-      listeners = new HashMap<Integer, MessageListenerWrapper>();
-      listeners.put(insertIdx++, createListener(listenerClass));
+      registerListener(listenerClass);
    }
 
    /**
-    * Jalam 2.0 Requires that listenerClasses are specified in the
-    * jms.properties
-    *
+    * Jalam 2.0 Requires that listenerClasses are specified in the jms.properties
+    * 
+    * @param listenerClasses listenerWrapper(s) to use in this controller
+    * 
     * @throws ResourceInitializerException
     */
-   public DefaultLifecycleController() throws ResourceInitializerException {
-      listeners = new HashMap<Integer, MessageListenerWrapper>();
-      Properties props = LoadJmsProperties();
-      ConfigureListeners(props);
+   public DefaultLifecycleController(Collection<Class> listenerClasses) throws ResourceInitializerException {
+       for (Class tclass : listenerClasses) {
+           registerListener(tclass);
+       }
    }
 
    @Override
@@ -86,7 +83,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
     * @param listenerClass class of new listener to be instantiated and added.
     * @throws ResourceInitializerException
     */
-   public void registerListener(Class listenerClass) throws ResourceInitializerException {
+   public final void registerListener(Class listenerClass) throws ResourceInitializerException {
       listeners.put(insertIdx++, createListener(listenerClass));
    }
 
@@ -118,61 +115,4 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
       }
    }
 
-   /**
-    * Find and load listener classes specified in the given properties object.
-    * Finally, choose the first class found as the listener class (defaulting if
-    * needed) TODO: SMM Add support for multiple listeners (this requires
-    * linking a listener to it's jms destinations).
-    *
-    * @param props
-    * @throws ResourceInitializerException if any of the listenerClasses
-    * supplied could not be found.
-    */
-   private void ConfigureListeners(Properties props) throws ResourceInitializerException {
-      String listenersString = props.getProperty("config.listeners", DEFAULT_LISTENER_CLASS.getName());
-      String[] listenerClassNames = listenersString.split("\\,");
-      Class[] listenerClasses = new Class[listenerClassNames.length];
-      try {
-         for (int i = 0; i < listenerClassNames.length; i++) {
-            listenerClasses[i] = ClassLoader.getSystemClassLoader().loadClass(listenerClassNames[i]);
-         }
-      } catch (ClassNotFoundException e) {
-         LOGGER.error("Failure in loading the listeners", e);
-      }
-
-      Class listenerClass;
-      if (listenerClasses[0] != null) {
-         listenerClass = listenerClasses[0];
-      } else {
-         listenerClass = DEFAULT_LISTENER_CLASS;
-      }
-      LOGGER.debug("Using Listener class: ".concat(listenerClass.getName()));
-
-      listeners.put(insertIdx++, createListener(listenerClass));
-   }
-
-   /**
-    * Recover the jms.properties file which should be stored in the conf
-    * directory TODO: Add support for supplying the location of the
-    * jms.properties.
-    *
-    * @return
-    */
-   private Properties LoadJmsProperties() {
-      Properties jmsProps = new Properties();
-      try {
-         InputStream in = new FileInputStream(new File("conf/jms.properties"));
-         jmsProps.load(in);
-         in.close();
-
-         LOGGER.info("******* JMS Properties **********\t");
-         for (Object key : jmsProps.keySet()) {
-            LOGGER.info("\t".concat(key.toString()).concat(" : ").concat(jmsProps.get(key) != null ? jmsProps.get(key).toString() : ""));
-         }
-         LOGGER.info("************************************\t");
-      } catch (IOException e) {
-         LOGGER.error("Unable to find jms.properties server configuration file, read the doc !", e);
-      }
-      return jmsProps;
-   }
 }

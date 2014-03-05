@@ -1,5 +1,5 @@
 /**
- * Copyright 2012,2013 - SFR (http://www.sfr.com/)
+ * Copyright 2012-2014 - SFR (http://www.sfr.com/)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package net.sfr.tv.jms.client;
 /**
  * Because it had to be run over Java6...
  * 
- * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
+ * @author matthieu.chaplin@sfr.com
  */
 public enum CliArgs {
 

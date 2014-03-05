@@ -91,13 +91,15 @@ Usage :
 
 Available arguments are : 
 
-    -Dhandler.class=<your.listener.class> -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) (-cf[connectionFactoryName]) <-f [filter]>
+    (-Dconfig.path=your.configPath) (-Dhandler.class=your.lifeCycleController) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) (-cf[connectionFactoryName]) <-f [filter]>
 
  - -q  : Destination is a queue. Topic is default.
  - -p  : Create a persistent ('durable') subscription. Default is false.
  - -u  : Unsubscribe an active durable subscription, then exit.
  - -cf : JNDI Connection Factory name. Default 'ConsumerConnectionFactory'.
- - -Dhandler.class : Set the MessageListener to use. Default is net.sfr.tv.jms.client.listener.LoggerMessageListener
+ - -Dconfig.path : Set the path of the configuration files. Instead, they should be in the binary directory. 
+ - -Dhandler.class : Set the LifeCycleController to use. Default is net.sfr.tv.jms.client.DefaultLifeCycleController. If a MessageListener is passed, then the DefaultLifeCycleController use a dedicated one instead of net.sfr.tv.jms.client.listener.LoggerMessageListener
+
                 
 Examples :
 
