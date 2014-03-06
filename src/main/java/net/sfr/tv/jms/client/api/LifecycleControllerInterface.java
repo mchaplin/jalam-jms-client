@@ -57,4 +57,12 @@ public interface LifecycleControllerInterface {
      */
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException;
     
+    /**
+     * Register a new Listener
+     * 
+     * @param   listenerClass   Class of the listener, implementing MessageListenerWrapper
+     * @see     net.sfr.tv.jms.client.api.MessageListenerWrapper
+     */
+    public void registerListener(Class listenerClass) throws ResourceInitializerException;
+    
 }

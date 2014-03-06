@@ -40,6 +40,8 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
 
    private int insertIdx = 0;
    private int retrievalIdx = 0;
+   
+   public DefaultLifecycleController() {};
 
    /**
     * Jalam 1.0 Requires the listenerClass to be provided at initialization.
@@ -83,6 +85,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
     * @param listenerClass class of new listener to be instantiated and added.
     * @throws ResourceInitializerException
     */
+   @Override
    public final void registerListener(Class listenerClass) throws ResourceInitializerException {
       listeners.put(insertIdx++, createListener(listenerClass));
    }

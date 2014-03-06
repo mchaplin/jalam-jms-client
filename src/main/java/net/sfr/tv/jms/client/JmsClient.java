@@ -94,13 +94,40 @@ public class JmsClient implements Runnable {
            Collection<String> listenerClassNames, 
            String cnxFactoryJndiName) throws ResourceInitializerException {
       /* Instantiate the 2 main components */
-      instantiate(lifecycleControllerClassName, DefaultLifecycleController.class, lifecycleController);
-      for (String listenerClassName : listenerClassNames) {
-         MessageListenerWrapper mlInstance = null;
-         instantiate(listenerClassName, MessageListenerWrapper.class, mlInstance); 
-         listenerClasses.add(mlInstance);
+      ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+      try {
+         // LifecycleController
+         Class lcClass = systemClassLoader.loadClass(lifecycleControllerClassName);
+         if (LifecycleControllerInterface.class.isAssignableFrom(lcClass)) {
+            Constructor ct = lcClass.getConstructor();
+            lifecycleController = (LifecycleControllerInterface) ct.newInstance();
+         }
+         else {
+            throw new ClassNotFoundException(lifecycleControllerClassName);
+         }
+         // Message Listeners
+         for (String listenerClassName : listenerClassNames) {
+            Class listenerClass = systemClassLoader.loadClass(listenerClassName);
+            if (MessageListenerWrapper.class.isAssignableFrom(listenerClass)) {
+               Constructor ct = listenerClass.getConstructor();
+               listenerClasses.add((MessageListenerWrapper) ct.newInstance());
+               lifecycleController.registerListener(listenerClass);
+            }
+            else {
+                throw new ClassNotFoundException(listenerClassName);
+            }
+         } 
+      } catch (ClassNotFoundException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (InstantiationException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (IllegalAccessException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (NoSuchMethodException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (InvocationTargetException ex) {
+         throw new ResourceInitializerException(ex);
       }
-      
       if (subscriptionBaseName == null) {
          subscriptionBaseName = "";
       }
@@ -121,7 +148,7 @@ public class JmsClient implements Runnable {
                 clientId, 
                 cnxFactoryJndiName, 
                 jndiProviderConfig.getCredentials(), 
-                 // TODO : to suppor multiple listeners, instantiate N InboundConnectionManagers ? 
+                 // TODO : to support multiple listeners, instantiate N InboundConnectionManagers ? 
                 listenerClasses.iterator().next()
          );
          cnxManager.connect(2);
@@ -157,33 +184,14 @@ public class JmsClient implements Runnable {
     * @param assignableRefClass A class assignable from the supertype of className
     * @param superclass A superclass to map to
     * @param obj the object in which an instance should be pushed 
+    * @param args
     * 
     * @throws ResourceInitializerException
     */
    private void instantiate(String className, Class assignableRefClass, Object obj) throws ResourceInitializerException {
 
       LOGGER.info("Instantiating : ".concat(className));
-      try {
-         ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-         Class myClass = systemClassLoader.loadClass(className);
-         if (assignableRefClass.isAssignableFrom(myClass)) {
-            Constructor ct = myClass.getConstructor();
-            obj = ct.newInstance();
-         }
-         else {
-             throw new ClassNotFoundException(className);
-         }
-      } catch (ClassNotFoundException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (InstantiationException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (IllegalAccessException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (NoSuchMethodException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (InvocationTargetException ex) {
-         throw new ResourceInitializerException(ex);
-      }
+       
    }
 
    /**

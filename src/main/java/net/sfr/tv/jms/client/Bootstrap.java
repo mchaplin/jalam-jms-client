@@ -15,6 +15,7 @@
  */
 package net.sfr.tv.jms.client;
 
+import java.io.File;
 import net.sfr.tv.jms.model.JndiProviderConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -64,7 +65,7 @@ public class Bootstrap {
       try {
          /* Get the main properties file */
          Properties mainProps = new Properties();
-         mainProps.load(Bootstrap.class.getResourceAsStream("project.properties"));
+         mainProps.load(Bootstrap.class.getResourceAsStream("/project.properties"));
          String version = mainProps.getProperty("version");
          String log4jProperties = mainProps.getProperty("properties.log4j");
          String jmsProperties = mainProps.getProperty("properties.jms");
@@ -73,24 +74,27 @@ public class Bootstrap {
          String defaultListener = mainProps.getProperty("listener.default");
          
          /* Get a configuration path property, consider configuration is in the binary directory instead */
-         String configurationPath = System.getProperty("config.path", "");
+         String configurationPath = System.getProperty("config.path", "/");
+         System.out.println("Hello, this is the Jalam JMS Client, v" + version);
+         System.out.println("Loading configuration from " + configurationPath + " ...");
          
          /* Instantiate Logger */
          try {
             Properties logProps = new Properties();
-            InputStream is = Bootstrap.class.getResourceAsStream(configurationPath.concat("/").concat(log4jProperties));
+            String log4jfile = configurationPath.concat("/").concat(log4jProperties); 
+            InputStream is = Bootstrap.class.getResourceAsStream(log4jfile);
             if (is != null) {
                logProps.load(is);
             } else {
-               logProps.load(new FileInputStream(configurationPath.concat("/").concat(log4jProperties)));
+               logProps.load(new FileInputStream(log4jfile));
             }
             PropertyConfigurator.configure(logProps);
          } catch (FileNotFoundException ex) {
             System.out.println("Log4J configuration not found, it's now the wrapper responsability to configure logging !");
          }
          Logger LOGGER = Logger.getLogger(Bootstrap.class);
-         LOGGER.info("Hello, this is the Jalam JMS Client, v".concat(version));
-
+         LOGGER.debug("Logging initialized"); 
+                 
          /* Retrieve and test consistency of arguments */
          String destination = null;
          String clientId = null;
