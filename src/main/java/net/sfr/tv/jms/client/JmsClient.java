@@ -100,22 +100,20 @@ public class JmsClient implements Runnable {
       }
 
       cnxManagers = new TreeMap<String, AbstractConnectionManager>();
-
+      int consumerIdx = 0;
       for (String group : jndiProviderConfig.getGroups()) {
          try {
             for (MessageListenerWrapper listener : lifecycleController.getListeners()) {
-               String clientListenerId = group.concat(clientId).concat(listener.getClass().getCanonicalName());
-               //InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
-               InboundConnectionManager cnxManager = new InboundConnectionManager(clientListenerId, jndiProviderConfig.getServersGroup(group), preferredServer, clientListenerId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+               String clientUid = clientId.concat("/" + consumerIdx++);
+               InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientUid, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
                cnxManager.connect(2);
 
-               int consumerIdx = 0;
                String subscriptionName;
+               int subscriptionIdx = 0;
                for (String dest : lifecycleController.getDestinations(listener.getClass())) {
-                  subscriptionName = listener.getName().concat("-".concat(dest).concat("-" + ++consumerIdx));
+                  subscriptionName = subscriptionBaseName.concat("-".concat(dest + "-" + subscriptionIdx++));
                   cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
-                  if (LOGGER.isInfoEnabled()) {
-                     //LOGGER.info("Host : ".concat(host));
+                  if (LOGGER.isInfoEnabled() || LOGGER.isDebugEnabled()) {
                      LOGGER.info("Destination : ".concat(dest));
                      LOGGER.info("ClientID : ".concat(clientId));
                      LOGGER.info("Subscription base name : ".concat(subscriptionBaseName));
@@ -123,7 +121,7 @@ public class JmsClient implements Runnable {
                      LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
                   }
                }
-               cnxManagers.put(clientListenerId, cnxManager);
+               cnxManagers.put(clientUid, cnxManager);
             }
          } catch (Exception ex) {
             LOGGER.error("Unable to start a listener/context binded to : ".concat(group), ex);
