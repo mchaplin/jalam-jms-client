@@ -139,7 +139,7 @@ Message listeners :
 To use a custom MessageListener with Jalam, you have to implement the interface net.sfr.tv.jms.client.api.MessageListenerWrapper.
 It provides a release() method, which is called upon program termination, and allows to release any specific resource.
 
-Lifecyle provider :
+Lifecycle provider :
 -------------------
 
 In order to handle more complex usage, where you need to initialize and keep tracks of many resources outside of the JMS listeners,
