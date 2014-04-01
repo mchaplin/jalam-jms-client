@@ -120,6 +120,9 @@
                <descriptorRefs>
                   <descriptorRef>jar-with-dependencies</descriptorRef>
                </descriptorRefs>
+               <descriptors>
+                  <descriptor>src/assembly/distribution.xml</descriptor>
+               </descriptors>               
             </configuration>
             <executions>
                <execution>

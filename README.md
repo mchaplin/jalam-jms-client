@@ -113,18 +113,20 @@ Subscribe to multiple destinations :
 
     java -jar jalam.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier
 
-Listeners :
+Default Listeners :
 -----------
 
 By default, Jalam uses a 'Logger Listener' which output messages content to Log4J.
 
- - A custom logger can be used, by setting the system property 'listener.logger.name'
+ - A custom logger can be used, by setting the system property 'listener.class' (-Dlistener.class=your.listener)
  - Output can be restricted to only include message body, by setting the system property 'listener.output.type' to 'BODY'
 
-An alternative listener which output to a file is provided :
+An alternative default listener which outputs to a file is provided :
 
- - -Dhandler.class=net.sfr.tv.jms.client.listener.FileOutMessageListener
- - Destination file is set with the system property 'listener.file.output'. (Absolute path)
+ - The FileOutMessageListener is provided in the jalam package
+  - -Dlistener.class=net.sfr.tv.jms.client.listener.FileOutMessageListener
+ - Destination file is set with the system property 'listener.file.output'. (must be an absolute path)
+  - -Dlistener.file.output=/home/username/tmp/jalam.log
 
 Refer to the next section to use customs MessageListeners.
 	
@@ -137,8 +139,7 @@ Message listeners :
 To use a custom MessageListener with Jalam, you have to implement the interface net.sfr.tv.jms.client.api.MessageListenerWrapper.
 It provides a release() method, which is called upon program termination, and allows to release any specific resource.
 
-
-Lifecyle provider :
+Lifecycle provider :
 -------------------
 
 In order to handle more complex usage, where you need to initialize and keep tracks of many resources outside of the JMS listeners,
