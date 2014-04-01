@@ -31,12 +31,13 @@ import org.apache.log4j.Logger;
  * 
  * @author matthieu.chaplin@sfr.com
  * @author pierre.cheynier@sfr.com 
+ * @author scott.messner.prestataire@sfr.com
  */
 public class DefaultLifecycleController implements LifecycleControllerInterface {
 
    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleController.class);
 
-   private Map<Integer, MessageListenerWrapper> listeners = new HashMap<Integer, MessageListenerWrapper>();;
+   private final Map<Integer, MessageListenerWrapper> listeners = new HashMap<>();;
 
    private int insertIdx = 0;
    private int retrievalIdx = 0;
@@ -56,15 +57,15 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
 
    /**
     * Jalam 2.0 Requires that listenerClasses are specified in the jms.properties
-    * 
+    *
     * @param listenerClasses listenerWrapper(s) to use in this controller
     * 
     * @throws ResourceInitializerException
     */
    public DefaultLifecycleController(Collection<Class> listenerClasses) throws ResourceInitializerException {
-       for (Class tclass : listenerClasses) {
-           registerListener(tclass);
-       }
+      for (Class tclass : listenerClasses) {
+         registerListener(tclass);
+      }
    }
 
    @Override
@@ -88,6 +89,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    @Override
    public final void registerListener(Class listenerClass) throws ResourceInitializerException {
       listeners.put(insertIdx++, createListener(listenerClass));
+      LOGGER.debug("Listener registered : ".concat(listenerClass.getName()));
    }
 
    private MessageListenerWrapper createListener(Class listenerClass) throws ResourceInitializerException {
@@ -106,7 +108,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    public Collection<MessageListenerWrapper> getListeners() {
       return listeners.values();
    }
-
+   
    @Override
    public void run() {
    }
@@ -117,5 +119,4 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
          listener.release();
       }
    }
-
 }

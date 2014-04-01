@@ -5,7 +5,7 @@
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -21,9 +21,9 @@ import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
@@ -32,8 +32,8 @@ import net.sfr.tv.jms.cnxmgt.InboundConnectionManager;
 import org.apache.log4j.Logger;
 
 /**
- * Main client class. 
- * Implements the monitor pattern, run/shutdown lifecycle methods.
+ * Main client class. Implements the monitor pattern, run/shutdown lifecycle
+ * methods.
  *
  * @author matthieu.chaplin@sfr.com
  * @author scott.messner.prestataire@sfr.com
@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
  */
 public class JmsClient implements Runnable {
 
-   private static Logger LOGGER = Logger.getLogger(JmsClient.class);
+   private static final Logger LOGGER = Logger.getLogger(JmsClient.class);
 
    /**
     * Monitor pattern
@@ -71,97 +71,63 @@ public class JmsClient implements Runnable {
     * @param jndiProviderConfig References available JNDI servers & associated
     * credentials.
     * @param preferredServer Preferred server alias.
-    * @param destinations JMS destinations JNDI name
     * @param isTopicSubscription Topic subscription flag
     * @param isDurableSubscription Durable subscription flag
     * @param clientId JMS client ID
     * @param subscriptionBaseName JMS subscription name prefix
     * @param selector JMS selector
     * @param lifecycleControllerClassName name of the LifecycleController class
-    * @param listenerClassNames Collection of names for the messageListener class
+    * @param listenerDestinationsMap Map of listener class names with their
+    * associated destinations
     * @param cnxFactoryJndiName JMS connection factory JNDI name
+    * @throws net.sfr.tv.exceptions.ResourceInitializerException
     */
    public JmsClient(
            JndiProviderConfiguration jndiProviderConfig,
            String preferredServer,
-           Collection<String> destinations,
            Boolean isTopicSubscription,
            Boolean isDurableSubscription,
            String clientId,
            String subscriptionBaseName,
            String selector,
            String lifecycleControllerClassName,
-           Collection<String> listenerClassNames, 
+           Map<String, String[]> listenerDestinationsMap,
            String cnxFactoryJndiName) throws ResourceInitializerException {
-      /* Instantiate the 2 main components */
-      ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-      try {
-         // LifecycleController
-         Class lcClass = systemClassLoader.loadClass(lifecycleControllerClassName);
-         if (LifecycleControllerInterface.class.isAssignableFrom(lcClass)) {
-            Constructor ct = lcClass.getConstructor();
-            lifecycleController = (LifecycleControllerInterface) ct.newInstance();
-         }
-         else {
-            throw new ClassNotFoundException(lifecycleControllerClassName);
-         }
-         // Message Listeners
-         for (String listenerClassName : listenerClassNames) {
-            Class listenerClass = systemClassLoader.loadClass(listenerClassName);
-            if (MessageListenerWrapper.class.isAssignableFrom(listenerClass)) {
-               Constructor ct = listenerClass.getConstructor();
-               listenerClasses.add((MessageListenerWrapper) ct.newInstance());
-               lifecycleController.registerListener(listenerClass);
-            }
-            else {
-                throw new ClassNotFoundException(listenerClassName);
-            }
-         } 
-      } catch (ClassNotFoundException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (InstantiationException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (IllegalAccessException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (NoSuchMethodException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (InvocationTargetException ex) {
-         throw new ResourceInitializerException(ex);
-      }
-      if (subscriptionBaseName == null) {
-         subscriptionBaseName = "";
-      }
-      if (LOGGER.isInfoEnabled()) {
-         LOGGER.info("Destinations : ".concat(Arrays.toString(destinations.toArray())));
-         LOGGER.info("ClientID : ".concat(clientId));
-         LOGGER.info("Subscription base name : ".concat(subscriptionBaseName));
-         LOGGER.info("Filter : ".concat(selector != null ? selector : ""));
-         LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
-      }
+      // LifecycleController and listeners
+      instantiateLifecycleController(lifecycleControllerClassName, listenerDestinationsMap.keySet());
 
-      cnxManagers = new TreeMap<String, AbstractConnectionManager>();
+      // Connect and Subscribe listeners to destinations
+      cnxManagers = new TreeMap<>();
+      int consumerIdx = 0;
       for (String group : jndiProviderConfig.getGroups()) {
-         InboundConnectionManager cnxManager = new InboundConnectionManager(
-                group, 
-                jndiProviderConfig.getServersGroup(group), 
-                preferredServer, 
-                clientId, 
-                cnxFactoryJndiName, 
-                jndiProviderConfig.getCredentials(), 
-                 // TODO : to support multiple listeners, instantiate N InboundConnectionManagers ? 
-                listenerClasses.iterator().next()
-         );
-         cnxManager.connect(2);
-         int consumerIdx = 0;
-         String subscriptionName;
-         for (String sdst : destinations) {
-            subscriptionName = subscriptionBaseName.concat(destinations.size() > 1 ? "-" + ++consumerIdx : "");
-            cnxManager.subscribe(sdst, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
+         try {
+            for (MessageListenerWrapper listener : lifecycleController.getListeners()) {
+               String clientUid = clientId.concat("/" + consumerIdx++);
+               InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientUid, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+               cnxManager.connect(2);
+               LOGGER.info("Connection created for ".concat(listener.getName()));
+
+               String subscriptionName;
+               int subscriptionIdx = 0;
+               for (String dest : listenerDestinationsMap.get(listener.getClass().getCanonicalName())) {
+                  subscriptionName = subscriptionBaseName.concat("-".concat(dest + "-" + subscriptionIdx++));
+                  cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
+                  if (LOGGER.isInfoEnabled() || LOGGER.isDebugEnabled()) {
+                     LOGGER.info("Destination : ".concat(dest));
+                     LOGGER.info("ClientID : ".concat(clientId));
+                     LOGGER.info("Subscription base name : ".concat(subscriptionBaseName));
+                     LOGGER.info("Durable subscription ? ".concat(String.valueOf(isDurableSubscription)));
+                     LOGGER.info("Filter : ".concat(selector != null ? selector : ""));
+                     LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
+                  }
+               }
+               cnxManagers.put(clientUid, cnxManager);
+            }
+         } catch (Exception ex) {
+            LOGGER.error("Unable to start a listener/context binded to : ".concat(group), ex);
          }
-         cnxManagers.put(group, cnxManager);
       }
 
-      LOGGER.info("Durable subscription ? ".concat(String.valueOf(isDurableSubscription)));
       lifecycleController.run();
 
       // START MESSAGE DELIVERY
@@ -177,21 +143,59 @@ public class JmsClient implements Runnable {
 
    /**
     * Instantiate the LifecycleControllerInterface with the specified classname
+    * and the given listeners
     *
     * @see net.sfr.tv.jms.client.wrapper.ListenerWrapper
     *
-    * @param className The name of the class to load and use. 
-    * @param assignableRefClass A class assignable from the supertype of className
-    * @param superclass A superclass to map to
-    * @param obj the object in which an instance should be pushed 
-    * @param args
-    * 
+    * @param lifeCycleControllerClassName The name of the LifecycleController
+    * class to load and
+    * @param listenerClassNames Comma-separated list of listener class names.
+    * use.
+    * @return the new instance of the LifecycleControllerInterface
     * @throws ResourceInitializerException
     */
-   private void instantiate(String className, Class assignableRefClass, Object obj) throws ResourceInitializerException {
+   private void instantiateLifecycleController(String lifecycleControllerClassName, Set<String> listenerClassNames) throws ResourceInitializerException {
+      ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 
-      LOGGER.info("Instantiating : ".concat(className));
-       
+      try {
+         Class lcClass = systemClassLoader.loadClass(lifecycleControllerClassName);
+         if (LifecycleControllerInterface.class.isAssignableFrom(lcClass)) {
+            Constructor ct = lcClass.getConstructor();
+            lifecycleController = (LifecycleControllerInterface) ct.newInstance();
+            LOGGER.debug("Using the specified LifecycleControllerInterface: ".concat(lcClass.getName()));
+            registerListeners(listenerClassNames);
+         } else {
+            throw new ClassNotFoundException(lifecycleControllerClassName);
+         }
+      } catch (ClassNotFoundException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (InstantiationException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (IllegalAccessException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (NoSuchMethodException ex) {
+         throw new ResourceInitializerException(ex);
+      } catch (InvocationTargetException ex) {
+         throw new ResourceInitializerException(ex);
+      }
+   }
+
+   /**
+    * Register the listener classes with the lifecycle controller
+    * @param listenerClassNames
+    * @throws ResourceInitializerException 
+    */
+   private void registerListeners(Set<String> listenerClassNames) throws ResourceInitializerException {
+      ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+      try {
+         // Message Listeners
+         for (String listenerClassName : listenerClassNames) {
+            Class listenerClass = systemClassLoader.loadClass(listenerClassName);
+            lifecycleController.registerListener(listenerClass);
+         }
+      } catch (ClassNotFoundException e) {
+         throw new ResourceInitializerException(e);
+      }
    }
 
    /**

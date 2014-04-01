@@ -5,7 +5,7 @@
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -15,7 +15,6 @@
  */
 package net.sfr.tv.jms.client;
 
-import java.io.File;
 import net.sfr.tv.jms.model.JndiProviderConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,7 +23,9 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import org.apache.log4j.Logger;
@@ -46,6 +47,12 @@ import org.apache.log4j.PropertyConfigurator;
 public class Bootstrap {
 
    private static final List<String> systemProperties = new ArrayList<>();
+
+   /**
+    * Map of destinations to be tied to each listener
+    */
+   private static final Map<String, String[]> listenerDestinationsMap = new HashMap<>();
+
    static {
       systemProperties.add("java.vm.version");
       systemProperties.add("java.runtime.version");
@@ -72,16 +79,16 @@ public class Bootstrap {
          String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default");
          String defaultHandler = mainProps.getProperty("handler.default");
          String defaultListener = mainProps.getProperty("listener.default");
-         
+
          /* Get a configuration path property, consider configuration is in the binary directory instead */
          String configurationPath = System.getProperty("config.path", "/");
          System.out.println("Hello, this is the Jalam JMS Client, v" + version);
          System.out.println("Loading configuration from " + configurationPath + " ...");
-         
+
          /* Instantiate Logger */
          try {
             Properties logProps = new Properties();
-            String log4jfile = configurationPath.concat("/").concat(log4jProperties); 
+            String log4jfile = configurationPath.concat("/").concat(log4jProperties);
             InputStream is = Bootstrap.class.getResourceAsStream(log4jfile);
             if (is != null) {
                logProps.load(is);
@@ -93,8 +100,8 @@ public class Bootstrap {
             System.out.println("Log4J configuration not found, it's now the wrapper responsability to configure logging !");
          }
          Logger LOGGER = Logger.getLogger(Bootstrap.class);
-         LOGGER.debug("Logging initialized"); 
-                 
+         LOGGER.debug("Logging initialized");
+
          /* Retrieve and test consistency of arguments */
          String destination = null;
          String clientId = null;
@@ -139,7 +146,7 @@ public class Bootstrap {
                   break;
             }
          }
-         if (destination == null || subscriptionName == null) {
+         if (configurationPath == null && destination == null || subscriptionName == null) {
             LOGGER.info("Usage : ");
             LOGGER.info("\tjava (-Dconfig.path=your.configPath) (-Dhandler.class=your.lifeCycleController) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
             LOGGER.info("\t -d  : Destination JNDI name. Mandatory.");
@@ -162,20 +169,20 @@ public class Bootstrap {
             // If not specified, a default clientId will be jalam-X.Y@hostname (reverse lookup)
             clientId = "jalam-".concat(version).concat("@").concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));
          }
-         
+
          /* Log Runtime Data */
          Properties system = System.getProperties();
          LOGGER.info("********** System Properties **********\t");
          if (system != null && !system.isEmpty()) {
             for (String prop : systemProperties) {
-               if (prop != null) { 
+               if (prop != null) {
                   LOGGER.info("\t".concat(prop).concat(" : ").concat(system.get(prop) != null ? system.get(prop).toString() : ""));
                }
             }
          }
          LOGGER.info("***************************************\t");
 
-         /* Get JMS Properties to get lists of JMS servers */                       
+         /* Get JMS Properties to get lists of JMS servers */
          Properties jmsProps = new Properties();
          try {
             InputStream is = Bootstrap.class.getResourceAsStream(configurationPath.concat("/").concat(jmsProperties));
@@ -191,24 +198,35 @@ public class Bootstrap {
          JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(jmsProps, null);
 
          String lifecycleControllerClassName = System.getProperty("handler.class", defaultHandler);
-         
+
          String listenerClassNames = System.getProperty("listener.class", defaultListener);
          if (jmsProps.containsKey("config.listeners")) {
-             listenerClassNames = jmsProps.getProperty("config.listeners");
+            listenerClassNames = jmsProps.getProperty("config.listeners");
          }
-         
+
+         for (String listenerClassName : Arrays.asList(listenerClassNames.split("\\,"))) {
+            String destinationsString = jmsProps.getProperty(listenerClassName.concat(".destinations"), null);
+            if (destinationsString == null) {
+               if (listenerClassName.equals(defaultListener)) {
+                  destinationsString = destination;
+               } else {
+                  throw new ResourceInitializerException(new Throwable("The destinations for ".concat(listenerClassName).concat(" could not be found.")));
+               }
+            }
+            listenerDestinationsMap.put(listenerClassName, destinationsString.split("\\,"));
+         }
+
          /* BOOTSTRAP */
          final JmsClient client = new JmsClient(
-                 jndiProviderConfig, 
-                 preferredServer, 
-                 Arrays.asList(destination.split("\\,")), 
-                 isTopicSubscription, 
-                 (unsubscribeAndExit ? Boolean.FALSE : isDurableSubscription), 
-                 clientId, 
-                 subscriptionName, 
-                 selector, 
-                 lifecycleControllerClassName, 
-                 Arrays.asList(listenerClassNames.split("\\,")), 
+                 jndiProviderConfig,
+                 preferredServer,
+                 isTopicSubscription,
+                 (unsubscribeAndExit ? Boolean.FALSE : isDurableSubscription),
+                 clientId,
+                 subscriptionName,
+                 selector,
+                 lifecycleControllerClassName,
+                 listenerDestinationsMap,
                  jndiConnectionFactory);
          if (unsubscribeAndExit) {
             client.shutdown();
@@ -223,7 +241,7 @@ public class Bootstrap {
             public void run() {
                synchronized (client.monitor) {
                   client.monitor.notify();
-               };
+               }
                client.shutdown();
             }
          });
