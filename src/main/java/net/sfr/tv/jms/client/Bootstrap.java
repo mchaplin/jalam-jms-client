@@ -74,9 +74,9 @@ public class Bootstrap {
          Properties mainProps = new Properties();
          mainProps.load(Bootstrap.class.getResourceAsStream("/project.properties"));
          String version = mainProps.getProperty("version");
-         String log4jProperties = mainProps.getProperty("properties.log4j");
-         String jmsProperties = mainProps.getProperty("properties.jms");
-         String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default");
+         String log4jProperties = mainProps.getProperty("properties.log4j", "log4j.properties");
+         String jmsProperties = mainProps.getProperty("properties.jms", "jms.properties");
+         String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default", "PreAckConsumerConnectionFactory");
          String defaultHandler = mainProps.getProperty("handler.default");
          String defaultListener = mainProps.getProperty("listener.default");
 

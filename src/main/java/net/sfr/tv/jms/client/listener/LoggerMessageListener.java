@@ -35,6 +35,8 @@ public class LoggerMessageListener implements MessageListenerWrapper {
     
     private String outputType;
         
+    private String outputProperty;
+    
     public LoggerMessageListener() {
         name = LoggerMessageListener.class.getName();
         String loggerName = System.getProperty("listener.logger.name");
@@ -45,6 +47,7 @@ public class LoggerMessageListener implements MessageListenerWrapper {
         }
         
         outputType = System.getProperty("listener.output.type", "FULL");
+        outputProperty = System.getProperty("listener.output.property");
     }
     
     @Override
@@ -52,7 +55,7 @@ public class LoggerMessageListener implements MessageListenerWrapper {
 
         try {
 
-            if (!outputType.equals("BODY")) {
+            if (outputType.equals("FULL")) {
                 LOGGER.info("Received message :: ID : "
                         .concat(msg.getJMSMessageID() != null ? msg.getJMSMessageID() : "(?)")
                         .concat(", type : ").concat(msg.getJMSType() != null ? msg.getJMSType() : "(?)")
@@ -81,20 +84,26 @@ public class LoggerMessageListener implements MessageListenerWrapper {
                 }
             }
             
-            if (TextMessage.class.isAssignableFrom(msg.getClass())) {
-                String text = ((TextMessage) msg).getText();
-                LOGGER.info(text);
-            } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
-                BytesMessage bm = (BytesMessage) msg;
-                byte[] body = new byte[(int)bm.getBodyLength()];
-                bm.readBytes(body);
-                
-                LOGGER.info(new String(body));
+            if (!outputType.equals("PROPERTY")) {
+                if (TextMessage.class.isAssignableFrom(msg.getClass())) {
+                    String text = ((TextMessage) msg).getText();
+                    LOGGER.info(text);
+                } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
+                    BytesMessage bm = (BytesMessage) msg;
+                    byte[] body = new byte[(int)bm.getBodyLength()];
+                    bm.readBytes(body);
+
+                    LOGGER.info(new String(body));
+                }   
+            }
+            
+            if (outputType.equals("PROPERTY")) {
+                LOGGER.info(msg.getStringProperty(outputProperty));
             }
 
             // ACK the message to remove it from the queue.
             msg.acknowledge();
-
+            
         } catch (JMSException ex) {
             if (IllegalStateException.class.isAssignableFrom(ex.getClass())) {
                 // Connection failure, try failover ?
