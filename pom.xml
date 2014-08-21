@@ -37,6 +37,19 @@
       <url>https://repository.jboss.org/nexus/content/repositories/public-jboss</url>
     </repository>
   </repositories>
+  
+  <distributionManagement>
+    <repository>
+      <id>maven.adm.tv.sfr.net</id>
+      <name>maven.adm.tv.sfr.net-releases</name>
+      <url>http://maven.adm.tv.sfr.net/artifactory/sfrtv-release-local</url>
+    </repository>
+    <snapshotRepository>
+      <id>maven.adm.tv.sfr.net</id>
+      <name>maven.adm.tv.sfr.net-snapshots</name>
+      <url>http://maven.adm.tv.sfr.net/artifactory/sfrtv-snapshot-local</url>
+    </snapshotRepository>    
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -120,10 +133,10 @@
             </manifest>
           </archive>
           <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
+            <descriptorRef>bin</descriptorRef>
           </descriptorRefs>
-          <finalName>${project.artifactId}-${project.version}-bin</finalName>
-          <appendAssemblyId>false</appendAssemblyId>
+          <!--<finalName>${project.artifactId}-${project.version}-bin</finalName>
+          <appendAssemblyId>false</appendAssemblyId>-->
         </configuration>
         <executions>
           <execution>
