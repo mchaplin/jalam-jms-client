@@ -38,7 +38,7 @@ It allows to define :
  - Logical groups of servers
  - Servers that belongs to those groups.
  
-Simple setup :
+Simple setup (jms.properties) :
 --------------
  
  The simplest configuration file contains the following :
@@ -49,6 +49,29 @@ Simple setup :
     # A JNDI provider whose alias is 'broker00'
     default.jms.server.broker00.host=broker00.mydomain.com
     default.jms.server.broker00.port=7676
+    
+ Logging preferences are specified in the log4j.properties file (here's an example. See https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html for information on the different logging levels
+ 
+    # Root logger option
+    log4j.rootLogger=INFO, stdout, fileout
+
+    # Direct log messages to stdout
+    log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+    log4j.appender.stdout.Target=System.out
+    log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.stdout.layout.ConversionPattern=%d{HH:mm:ss} %5p : %m%n
+    
+    # redirect to file -- format and file location.
+    log4j.appender.fileout=org.apache.log4j.FileAppender
+    log4j.appender.fileout.File=/tmp/jms-client.log
+    log4j.appender.fileout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.fileout.layout.ConversionPattern=%d{HH:mm:ss} %5p : %m%n
+
+    # Logging levels for specific modules
+    log4j.logger.org.apache=INFO
+    log4j.logger.httpclient.wire=INFO
+    log4j.logger.org.apache.commons=INFO
+    log4j.logger.org.apache.jackrabbit=INFO
 
 Active/active setup, with failover :
 ------------------------------------
