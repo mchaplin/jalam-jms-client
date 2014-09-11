@@ -1,11 +1,10 @@
-===============================================================================
-    jalam
-===============================================================================
+Jalam
+=====
 
 Production grade J2SE JMS client.
 
 Features : 
-===============================================================================
+==========
 
  - Failover : Automatic reconnection.
  - Cascading failover between servers if available.
@@ -16,7 +15,7 @@ Features :
     additionnal resources. (I/O, network, connection pools)
 
 Building from sources :
-===============================================================================
+=======================
 
     git clone https://github.com/sfr-network-service-platforms/jalam.git
     mvn dependency:copy-dependencies package install
@@ -30,7 +29,7 @@ The JAR archive classpath requires the following deployment layout :
     ./lib/<runtime-libraries>.jar
 
 Configuration :
-===============================================================================
+===============
 
 Upon startup, a list of configured JNDI providers is loaded from a classpath file named 'jms.properties'.
 It allows to define :
@@ -112,7 +111,7 @@ To use a listener other than the default, the names of the listener classes and 
     net.sfr.tv.listener.TopicListener3.destinations=/topic/3
 	
 Usage :
-===============================================================================
+=======
 
     java -cp jalam-<version>.jar net.sfr.tv.jms.client.Bootstrap <arguments>
 
@@ -158,7 +157,7 @@ An alternative default listener which outputs to a file is provided :
 Refer to the next section to use customs MessageListeners.
 	
 Extensibility :
-===============================================================================
+===============
 
 Message listeners :
 -------------------
@@ -167,7 +166,7 @@ To use a custom MessageListener with Jalam, you have to implement the interface 
 It provides a release() method, which is called upon program termination, and allows to release any specific resource.
 
 Lifecycle provider :
--------------------
+--------------------
 
 In order to handle more complex usage, where you need to initialize and keep tracks of many resources outside of the JMS listeners,
 you can implement the net.sfr.tv.jms.client.api.LifecycleControllerInterface, which provides the following methods :
