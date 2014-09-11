@@ -39,7 +39,7 @@ It allows to define :
  - Servers that belongs to those groups.
  
 Simple setup (jms.properties) :
---------------
+-------------------------------
  
  The simplest configuration file contains the following :
 
@@ -49,8 +49,11 @@ Simple setup (jms.properties) :
     # A JNDI provider whose alias is 'broker00'
     default.jms.server.broker00.host=broker00.mydomain.com
     default.jms.server.broker00.port=7676
-    
- Logging preferences are specified in the log4j.properties file (here's an example. See https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html for information on the different logging levels
+
+Logging :
+---------
+
+Logging preferences are specified in the log4j.properties file (here's an example. See https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html for information on the different logging levels)
  
     # Root logger option
     log4j.rootLogger=INFO, stdout, fileout
@@ -72,6 +75,7 @@ Simple setup (jms.properties) :
     log4j.logger.httpclient.wire=INFO
     log4j.logger.org.apache.commons=INFO
     log4j.logger.org.apache.jackrabbit=INFO
+
 
 Active/active setup, with failover :
 ------------------------------------
