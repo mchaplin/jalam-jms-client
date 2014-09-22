@@ -45,18 +45,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
    public DefaultLifecycleController() {};
 
    /**
-    * Jalam 1.0 Requires the listenerClass to be provided at initialization.
-    *
-    * @param listenerClass listenerWrapper to use in this controller
-    * 
-    * @throws ResourceInitializerException
-    */
-   public DefaultLifecycleController(Class listenerClass) throws ResourceInitializerException {
-      registerListener(listenerClass);
-   }
-
-   /**
-    * Jalam 2.0 Requires that listenerClasses are specified in the jms.properties
+    * listenerClasses are set by destinations, & specified in jms.properties file.
     *
     * @param listenerClasses listenerWrapper(s) to use in this controller
     * 
@@ -96,9 +85,7 @@ public class DefaultLifecycleController implements LifecycleControllerInterface 
       MessageListenerWrapper ret = null;
       try {
          ret = (MessageListenerWrapper) listenerClass.newInstance();
-      } catch (InstantiationException ex) {
-         throw new ResourceInitializerException(ex);
-      } catch (IllegalAccessException ex) {
+      } catch (InstantiationException | IllegalAccessException ex) {
          throw new ResourceInitializerException(ex);
       }
       return ret;

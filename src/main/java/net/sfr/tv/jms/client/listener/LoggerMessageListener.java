@@ -87,13 +87,14 @@ public class LoggerMessageListener implements MessageListenerWrapper {
             if (!outputType.equals("PROPERTY")) {
                 if (TextMessage.class.isAssignableFrom(msg.getClass())) {
                     String text = ((TextMessage) msg).getText();
-                    LOGGER.info(text);
+                    
+                    LOGGER.info("[".concat(String.valueOf(text.length())).concat("] : ").concat(text));
                 } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
                     BytesMessage bm = (BytesMessage) msg;
                     byte[] body = new byte[(int)bm.getBodyLength()];
                     bm.readBytes(body);
 
-                    LOGGER.info(new String(body));
+                    LOGGER.info("[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body)));
                 }   
             }
             
