@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.jms.client.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
+import net.sfr.tv.jms.client.api.LifecycleController;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import org.apache.log4j.Logger;
 
@@ -27,13 +27,13 @@ import org.apache.log4j.Logger;
  * An "embedded" Lifecycle Controller. 
  * Feel free to create your own to do more sophisticated things ! 
  * 
- * @see net.sfr.tv.jms.client.api.LifecycleControllerInterface
+ * @see net.sfr.tv.jms.client.api.LifecycleController
  * 
  * @author matthieu.chaplin@sfr.com
  * @author pierre.cheynier@sfr.com 
  * @author scott.messner.prestataire@sfr.com
  */
-public class DefaultLifecycleController implements LifecycleControllerInterface {
+public class DefaultLifecycleController implements LifecycleController {
 
    private final Logger LOGGER = Logger.getLogger(DefaultLifecycleController.class);
 

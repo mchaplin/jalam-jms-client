@@ -13,32 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.client.listener;
+package net.sfr.tv.jms.client.impl.listener;
 
-import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.util.Enumeration;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
+import net.sfr.tv.jms.client.impl.AbstractMessageListener;
 import org.apache.log4j.Logger;
 
 /**
  * A simple message listener, printing message content to logging facility.
  * 
  */
-public class LoggerMessageListener implements MessageListenerWrapper {
+public class LoggerMessageListener extends AbstractMessageListener {
 
     private Logger LOGGER;
-
-    private String name;
     
-    private String outputType;
+    private final String outputType;
         
-    private String outputProperty;
+    private final String outputProperty;
     
     public LoggerMessageListener() {
-        name = LoggerMessageListener.class.getName();
+        super();
         String loggerName = System.getProperty("listener.logger.name");
         if (loggerName != null && loggerName.trim().length() > 0) {
             LOGGER = Logger.getLogger(loggerName);
@@ -113,15 +111,4 @@ public class LoggerMessageListener implements MessageListenerWrapper {
             LOGGER.error(ex.getMessage(), ex);
         }
     }
-
-    @Override
-    public void release() {}
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String value) {}
 }

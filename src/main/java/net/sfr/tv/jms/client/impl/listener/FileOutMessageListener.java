@@ -1,10 +1,26 @@
-package net.sfr.tv.jms.client.listener;
+/**
+ * Copyright 2012-2014 - SFR (http://www.sfr.com/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package net.sfr.tv.jms.client.impl.listener;
 
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.io.File;
 import java.nio.ByteBuffer;
 import javax.jms.Message;
 import javax.jms.TextMessage;
+import net.sfr.tv.jms.client.impl.AbstractMessageListener;
 import org.apache.log4j.Logger;
 import org.hornetq.core.journal.SequentialFile;
 import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
@@ -14,19 +30,17 @@ import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class FileOutMessageListener implements MessageListenerWrapper {
+public class FileOutMessageListener extends AbstractMessageListener {
 
     private final Logger LOGGER = Logger.getLogger(FileOutMessageListener.class);
     
-    private String name;
+    private final String fileName;
     
-    private String fileName;
-    
-    private SequentialFile out;
+    private final SequentialFile out;
     
     public FileOutMessageListener() throws Exception {
         
-        name = FileOutMessageListener.class.getName();
+        super();
         
         fileName = System.getProperty("listener.file.output", "");
         File wrapper = new File(fileName);
@@ -73,12 +87,4 @@ public class FileOutMessageListener implements MessageListenerWrapper {
             LOGGER.error(ex.getMessage(), ex);
         }
     }
-    
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String value) {}
 }

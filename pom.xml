@@ -2,17 +2,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <scm>
-    <developerConnection>scm:git:https://github.com/sfr-network-service-platforms/jalam.git</developerConnection>
-  </scm> 
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-   
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalam</artifactId>
-  <version>1.2.3-1</version>
+  <version>1.2.4-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Jalam J2SE JMS Client</name>
 
@@ -24,7 +16,21 @@
     </license>
   </licenses>
 
-  <repositories>
+  <scm>
+    <developerConnection>scm:git:https://github.com/sfr-network-service-platforms/jalam.git</developerConnection>
+  </scm> 
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <dependency.metrics.version>3.1.0</dependency.metrics.version>
+    <dependency.hornetq.version>2.3.19.Final</dependency.hornetq.version>
+    <dependency.log4j.version>1.2.17</dependency.log4j.version>
+    <dependency.commons-codec.version>1.8</dependency.commons-codec.version>
+    <dependency.jalco.version>1.0.5</dependency.jalco.version>
+    <dependency.jnp-client.version>5.0.5.Final</dependency.jnp-client.version>
+  </properties>
+
+  <!--<repositories>
     <repository>
       <id>jboss-pub-repo</id>
       <name>Jboss public repository</name>
@@ -36,7 +42,7 @@
       </snapshots>
       <url>https://repository.jboss.org/nexus/content/repositories/public-jboss</url>
     </repository>
-  </repositories>
+  </repositories>-->
   
   <distributionManagement>
     <repository>
@@ -55,43 +61,43 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <version>${dependency.log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.8</version>
+      <version>${dependency.commons-codec.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${dependency.metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>net.sfr.tv</groupId>  
       <artifactId>jalco</artifactId>  
-      <version>1.0.5</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.javaee</groupId>
-      <artifactId>jboss-jms-api</artifactId>
-      <version>1.1.0.GA</version>
+      <version>${dependency.jalco.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hornetq</groupId>  
       <artifactId>hornetq-commons</artifactId>
-      <version>2.3.19.Final</version>
+      <version>${dependency.hornetq.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hornetq</groupId>  
       <artifactId>hornetq-jms-client</artifactId>  
-      <version>2.3.19.Final</version>
+      <version>${dependency.hornetq.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.hornetq</groupId>  
       <artifactId>hornetq-journal</artifactId>  
-      <version>2.3.19.Final</version>
+      <version>${dependency.hornetq.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.naming</groupId>  
       <artifactId>jnp-client</artifactId>  
-      <version>5.0.5.Final</version>
+      <version>${dependency.jnp-client.version}</version>
       <scope>runtime</scope>
     </dependency>
   </dependencies>
@@ -155,11 +161,6 @@
         <!--<configuration>
           <tagBase>https://svn.mycompany.com/repos/myapplication/releases</tagBase>
         </configuration>-->
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.4.1</version>
       </plugin>
     </plugins>
     <resources>

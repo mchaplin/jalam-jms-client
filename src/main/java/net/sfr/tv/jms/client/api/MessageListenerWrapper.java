@@ -18,7 +18,7 @@ package net.sfr.tv.jms.client.api;
 import javax.jms.MessageListener;
 
 /**
- * A named MessageListener, with complementary lifecycle methods.
+ * A named MessageListener, with additional lifecycle methods.
  * 
  * Those can be released upon shutdown by implementing the release() method.
  * 

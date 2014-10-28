@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.LifecycleControllerInterface;
+import net.sfr.tv.jms.client.api.LifecycleController;
 import net.sfr.tv.jms.cnxmgt.InboundConnectionManager;
 import org.apache.log4j.Logger;
 
@@ -57,7 +57,7 @@ public class JmsClient implements Runnable {
     /**
      * Listener wrapper class (alternate to using a listener class
      */
-    private LifecycleControllerInterface lifecycleController;
+    private LifecycleController lifecycleController;
 
     /**
      *
@@ -151,13 +151,13 @@ public class JmsClient implements Runnable {
 
         try {
             Class lcClass = systemClassLoader.loadClass(lifecycleControllerClassName);
-            if (LifecycleControllerInterface.class.isAssignableFrom(lcClass)) {
+            if (LifecycleController.class.isAssignableFrom(lcClass)) {
                 Constructor ct = lcClass.getConstructor();
                 LOGGER.info("Using custom LifecycleControllerInterface : ".concat(lcClass.getName()));
-                lifecycleController = (LifecycleControllerInterface) ct.newInstance();
+                lifecycleController = (LifecycleController) ct.newInstance();
                 registerListeners(listenerClassNames);
             } else {
-                throw new ClassNotFoundException(lifecycleControllerClassName);
+                throw new ResourceInitializerException(lcClass.getName().concat(" is not a subtype of ").concat(LifecycleController.class.getName()), null);
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
             throw new ResourceInitializerException(ex);

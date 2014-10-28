@@ -29,7 +29,7 @@ import net.sfr.tv.exceptions.ResourceInitializerException;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public interface LifecycleControllerInterface {
+public interface LifecycleController {
 
     /**
      * Starts the message listener
@@ -53,7 +53,10 @@ public interface LifecycleControllerInterface {
     /**
      * Returns the wrapped listener
      * 
+     * @param listenerClass
      * @return 
+     * 
+     * @throws ResourceInitializerException
      */
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException;
  
@@ -62,6 +65,8 @@ public interface LifecycleControllerInterface {
      * 
      * @param   listenerClass   Class of the listener, implementing MessageListenerWrapper
      * @see     net.sfr.tv.jms.client.api.MessageListenerWrapper
+     * 
+     * @throws ResourceInitializerException
      */
     public void registerListener(Class listenerClass) throws ResourceInitializerException;
     

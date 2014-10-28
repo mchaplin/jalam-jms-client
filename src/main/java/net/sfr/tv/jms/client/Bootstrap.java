@@ -45,11 +45,6 @@ public class Bootstrap {
 
     private static final List<String> systemProperties = new ArrayList<>();
 
-    /**
-     * Map of destinations to be tied to each listener
-     */
-    private static final Map<String, String[]> listenerDestinationsMap = new HashMap<>();
-
     static {
         systemProperties.add("java.vm.version");
         systemProperties.add("java.runtime.version");
@@ -75,7 +70,6 @@ public class Bootstrap {
             String jmsProperties = mainProps.getProperty("properties.jms", "jms.properties");
             String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default", "PreAckConsumerConnectionFactory");
             String defaultHandler = mainProps.getProperty("handler.default");
-            String defaultListener = mainProps.getProperty("listener.default");
 
             /* Get a configuration path property, consider configuration is in the binary directory instead */
             String configurationPath = System.getProperty("config.path", "/");
@@ -196,24 +190,30 @@ public class Bootstrap {
             JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(jmsProps, null);
 
             String lifecycleControllerClassName = System.getProperty("handler.class", defaultHandler);
-
-            String listenerClassNames = System.getProperty("listener.class", defaultListener);
+            
+            Map<String, String[]> listenerByDestinations = new HashMap<>();
+            
             if (jmsProps.containsKey("config.listeners")) {
-                listenerClassNames = jmsProps.getProperty("config.listeners");
-            }
-
-            for (String listenerClassName : Arrays.asList(listenerClassNames.split("\\,"))) {
-                String destinationsString = jmsProps.getProperty(listenerClassName.concat(".destinations"), null);
-                if (destinationsString == null) {
-                    if (listenerClassName.equals(defaultListener)) {
-                        destinationsString = destination;
-                    } else {
-                        throw new ResourceInitializerException(new Throwable("Destination for ".concat(listenerClassName).concat(" could not be found. !")));
-                    }
+                // COMPLEX LISTENERS/DESTINATIONS DEFINED IN jms.properties
+                String listenerClassNames = jmsProps.getProperty("config.listeners");
+                for (String listenerClass : Arrays.asList(listenerClassNames.split("\\,"))) {
+                    String destinationsString = jmsProps.getProperty(listenerClass.concat(".destinations"), null);
+                    /*if (destinationsString == null) {
+                        if (listenerClass.equals(defaultListener)) {
+                            destinationsString = destination;
+                        } else {
+                            throw new ResourceInitializerException(new Throwable("Destination for ".concat(listenerClass).concat(" could not be found. !")));
+                        }
+                    }*/
+                    listenerByDestinations.put(listenerClass, destinationsString.split("\\,"));
                 }
-                listenerDestinationsMap.put(listenerClassName, destinationsString.split("\\,"));
+            } else {
+                // SIMPLE LISTENER/DESTINATION BINDING
+                listenerByDestinations.put(System.getProperty("listener.class", defaultHandler), new String[] {destination});
             }
-
+            
+            //String listenerClassNames = System.getProperty("listener.class", defaultListener);
+            
             /* BOOTSTRAP */
             final JmsClient client = new JmsClient(
                     jndiProviderConfig,
@@ -224,7 +224,7 @@ public class Bootstrap {
                     subscriptionName,
                     selector,
                     lifecycleControllerClassName,
-                    listenerDestinationsMap,
+                    listenerByDestinations,
                     jndiConnectionFactory);
             if (unsubscribeAndExit) {
                 client.shutdown();
@@ -244,13 +244,7 @@ public class Bootstrap {
                 }
             });
 
-        } catch (NumberFormatException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);
-        } catch (IOException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);
-        } catch (ResourceInitializerException ex) {
+        } catch (NumberFormatException | IOException | ResourceInitializerException ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
         }
