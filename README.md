@@ -1,11 +1,10 @@
-===============================================================================
-    jalam
-===============================================================================
+Jalam
+=====
 
 Production grade J2SE JMS client.
 
 Features : 
-===============================================================================
+==========
 
  - Failover : Automatic reconnection.
  - Cascading failover between servers if available.
@@ -16,7 +15,7 @@ Features :
     additionnal resources. (I/O, network, connection pools)
 
 Building from sources :
-===============================================================================
+=======================
 
     git clone https://github.com/sfr-network-service-platforms/jalam.git
     mvn dependency:copy-dependencies package install
@@ -30,7 +29,7 @@ The JAR archive classpath requires the following deployment layout :
     ./lib/<runtime-libraries>.jar
 
 Configuration :
-===============================================================================
+===============
 
 Upon startup, a list of configured JNDI providers is loaded from a classpath file named 'jms.properties'.
 It allows to define :
@@ -38,8 +37,8 @@ It allows to define :
  - Logical groups of servers
  - Servers that belongs to those groups.
  
-Simple setup :
---------------
+Simple setup (jms.properties) :
+-------------------------------
  
  The simplest configuration file contains the following :
 
@@ -49,6 +48,33 @@ Simple setup :
     # A JNDI provider whose alias is 'broker00'
     default.jms.server.broker00.host=broker00.mydomain.com
     default.jms.server.broker00.port=7676
+
+Logging :
+---------
+
+Logging preferences are specified in the log4j.properties file (here's an example. See https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html for information on the different logging levels)
+ 
+    # Root logger option
+    log4j.rootLogger=INFO, stdout, fileout
+
+    # Direct log messages to stdout
+    log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+    log4j.appender.stdout.Target=System.out
+    log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.stdout.layout.ConversionPattern=%d{HH:mm:ss} %5p : %m%n
+    
+    # redirect to file -- format and file location.
+    log4j.appender.fileout=org.apache.log4j.FileAppender
+    log4j.appender.fileout.File=/tmp/jms-client.log
+    log4j.appender.fileout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.fileout.layout.ConversionPattern=%d{HH:mm:ss} %5p : %m%n
+
+    # Logging levels for specific modules
+    log4j.logger.org.apache=INFO
+    log4j.logger.httpclient.wire=INFO
+    log4j.logger.org.apache.commons=INFO
+    log4j.logger.org.apache.jackrabbit=INFO
+
 
 Active/active setup, with failover :
 ------------------------------------
@@ -85,7 +111,7 @@ To use a listener other than the default, the names of the listener classes and 
     net.sfr.tv.listener.TopicListener3.destinations=/topic/3
 	
 Usage :
-===============================================================================
+=======
 
     java -cp jalam-<version>.jar net.sfr.tv.jms.client.Bootstrap <arguments>
 
@@ -131,7 +157,7 @@ An alternative default listener which outputs to a file is provided :
 Refer to the next section to use customs MessageListeners.
 	
 Extensibility :
-===============================================================================
+===============
 
 Message listeners :
 -------------------
@@ -140,7 +166,7 @@ To use a custom MessageListener with Jalam, you have to implement the interface 
 It provides a release() method, which is called upon program termination, and allows to release any specific resource.
 
 Lifecycle provider :
--------------------
+--------------------
 
 In order to handle more complex usage, where you need to initialize and keep tracks of many resources outside of the JMS listeners,
 you can implement the net.sfr.tv.jms.client.api.LifecycleControllerInterface, which provides the following methods :
