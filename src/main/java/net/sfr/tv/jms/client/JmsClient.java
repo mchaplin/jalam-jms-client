@@ -17,8 +17,6 @@ import net.sfr.tv.jms.cnxmgt.AbstractConnectionManager;
 import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -35,14 +33,9 @@ import org.apache.log4j.Logger;
  * @author scott.messner.prestataire@sfr.com
  * @author pierre.cheynier@sfr.com
  */
-public class JmsClient implements Runnable {
+public class JmsClient {
 
     private static final Logger LOGGER = Logger.getLogger(JmsClient.class);
-
-    /**
-     * Monitor pattern
-     */
-    public final Object monitor = new Object();
 
     /**
      * Stateful JMS connection managers : Handles connection/failover for a logical group of JMS servers.
@@ -50,17 +43,11 @@ public class JmsClient implements Runnable {
     private Map<String, AbstractConnectionManager> cnxManagers;
 
     /**
-     * JMS listener class
-     */
-    private Collection<MessageListenerWrapper> listenerClasses = new ArrayList<>();
-
-    /**
      * Listener wrapper class (alternate to using a listener class
      */
     private LifecycleController lifecycleController;
 
     /**
-     *
      * Constructor.
      *
      * @param jndiProviderConfig References available JNDI servers & associated credentials.
@@ -180,22 +167,6 @@ public class JmsClient implements Runnable {
             }
         } catch (ClassNotFoundException e) {
             throw new ResourceInitializerException(e);
-        }
-    }
-
-    /**
-     * Monitor pattern
-     */
-    @Override
-    public void run() {
-
-        // ... forever. The thread is waiting for someone to call notify() on the lock object.
-        synchronized (monitor) {
-            try {
-                monitor.wait();
-            } catch (InterruptedException ex) {
-                LOGGER.warn("Got interrupted !");
-            }
         }
     }
 

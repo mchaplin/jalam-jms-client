@@ -215,7 +215,7 @@ public class Bootstrap {
             //String listenerClassNames = System.getProperty("listener.class", defaultListener);
             
             /* BOOTSTRAP */
-            final JmsClient client = new JmsClient(
+            final RunnableJmsClient client = new RunnableJmsClient(
                     jndiProviderConfig,
                     preferredServer,
                     isTopicSubscription,
