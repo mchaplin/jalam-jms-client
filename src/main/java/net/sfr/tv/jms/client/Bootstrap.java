@@ -70,6 +70,7 @@ public class Bootstrap {
             String jmsProperties = mainProps.getProperty("properties.jms", "jms.properties");
             String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default", "PreAckConsumerConnectionFactory");
             String defaultHandler = mainProps.getProperty("handler.default");
+            String defaultListener = mainProps.getProperty("listener.default");
 
             /* Get a configuration path property, consider configuration is in the binary directory instead */
             String configurationPath = System.getProperty("config.path", "/");
@@ -209,7 +210,7 @@ public class Bootstrap {
                 }
             } else {
                 // SIMPLE LISTENER/DESTINATION BINDING
-                listenerByDestinations.put(System.getProperty("listener.class", defaultHandler), new String[] {destination});
+                listenerByDestinations.put(System.getProperty("listener.class", defaultListener), new String[] {destination});
             }
             
             //String listenerClassNames = System.getProperty("listener.class", defaultListener);
