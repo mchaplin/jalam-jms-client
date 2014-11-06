@@ -41,21 +41,6 @@ public class DefaultLifecycleController implements LifecycleController {
 
    private int insertIdx = 0;
    private int retrievalIdx = 0;
-   
-   public DefaultLifecycleController() {};
-
-   /**
-    * listenerClasses are set by destinations, & specified in jms.properties file.
-    *
-    * @param listenerClasses listenerWrapper(s) to use in this controller
-    * 
-    * @throws ResourceInitializerException
-    */
-   public DefaultLifecycleController(Collection<Class> listenerClasses) throws ResourceInitializerException {
-      for (Class tclass : listenerClasses) {
-         registerListener(tclass);
-      }
-   }
 
    @Override
    public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException {
@@ -97,8 +82,7 @@ public class DefaultLifecycleController implements LifecycleController {
    }
    
    @Override
-   public void run() {
-   }
+   public void run() {}
 
    @Override
    public void release() {
