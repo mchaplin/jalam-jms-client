@@ -25,8 +25,11 @@ public abstract class AbstractMessageListener implements MessageListenerWrapper 
     
     protected String name;
     
-    public AbstractMessageListener() {
-        name = getClass().getName();
+    protected final String[] destinations;
+    
+    public AbstractMessageListener(final String[] destinations) {
+        this.name = getClass().getName();
+        this.destinations = destinations;
     }
     
     @Override
@@ -37,6 +40,11 @@ public abstract class AbstractMessageListener implements MessageListenerWrapper 
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String[] getDestinations() {
+        return destinations;
     }
 
     @Override

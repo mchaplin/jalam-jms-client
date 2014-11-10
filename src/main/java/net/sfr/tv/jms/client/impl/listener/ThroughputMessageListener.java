@@ -36,9 +36,10 @@ public class ThroughputMessageListener extends AbstractMessageListener {
     
     private final Meter messagesMeter = metrics.meter("Throughput");
     
-    public ThroughputMessageListener() {
-        super();
-        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+    public ThroughputMessageListener(final String[] destinations) {
+        super(destinations);
+        
+        final ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
           .convertRatesTo(TimeUnit.SECONDS)
           .convertDurationsTo(TimeUnit.MILLISECONDS)
           .build();

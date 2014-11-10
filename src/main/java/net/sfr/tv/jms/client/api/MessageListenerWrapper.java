@@ -15,6 +15,7 @@
  */
 package net.sfr.tv.jms.client.api;
 
+import java.util.List;
 import javax.jms.MessageListener;
 
 /**
@@ -39,6 +40,11 @@ public interface MessageListenerWrapper extends MessageListener {
      * @param name  Name 
      */
     public void setName(String name);
+    
+    /**
+     * @return destinations associated with this listener
+     */
+    public String[] getDestinations();
     
     /**
      * Call upon client shutdown, override to free any resource.

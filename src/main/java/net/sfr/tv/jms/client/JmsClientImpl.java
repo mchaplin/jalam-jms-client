@@ -18,10 +18,10 @@ import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
+import net.sfr.tv.jms.client.api.JmsClient;
 import net.sfr.tv.jms.client.api.LifecycleController;
 import net.sfr.tv.jms.cnxmgt.InboundConnectionManager;
 import org.apache.log4j.Logger;
@@ -33,9 +33,9 @@ import org.apache.log4j.Logger;
  * @author scott.messner.prestataire@sfr.com
  * @author pierre.cheynier@sfr.com
  */
-public class JmsClient {
+public class JmsClientImpl implements JmsClient {
 
-    private static final Logger LOGGER = Logger.getLogger(JmsClient.class);
+    private static final Logger LOGGER = Logger.getLogger(JmsClientImpl.class);
 
     /**
      * Stateful JMS connection managers : Handles connection/failover for a logical group of JMS servers.
@@ -57,12 +57,13 @@ public class JmsClient {
      * @param clientId JMS client ID
      * @param subscriptionBaseName JMS subscription name prefix
      * @param selector JMS selector
-     * @param lifecycleControllerClassName name of the LifecycleController class
-     * @param listenerDestinationsMap Map of listener class names with their associated destinations
+     * @param lifecycleControllerClass LifecycleController class
+     * @param listenerClassName name of the JMS Listener class
+     * @param destinations JNDI destinations to bind to
      * @param cnxFactoryJndiName JMS connection factory JNDI name
      * @throws net.sfr.tv.exceptions.ResourceInitializerException
      */
-    public JmsClient(
+    public JmsClientImpl(
             JndiProviderConfiguration jndiProviderConfig,
             String preferredServer,
             Boolean isTopicSubscription,
@@ -70,12 +71,16 @@ public class JmsClient {
             String clientId,
             String subscriptionBaseName,
             String selector,
-            String lifecycleControllerClassName,
-            Map<String, String[]> listenerDestinationsMap,
+            Class lifecycleControllerClass,
+            String listenerClassName,
+            String[] destinations,
             String cnxFactoryJndiName) throws ResourceInitializerException {
         
-        // LifecycleController and listeners
-        instantiateLifecycleController(lifecycleControllerClassName, listenerDestinationsMap.keySet());
+        lifecycleController = instantiateLifecycleController(lifecycleControllerClass, destinations);
+        
+        /*if (destinationsByListeners != null) {
+            registerListeners(destinationsByListeners);
+        }*/
 
         // Connect and Subscribe listeners to destinations
         cnxManagers = new TreeMap<>();
@@ -90,7 +95,8 @@ public class JmsClient {
 
                     String subscriptionName;
                     int subscriptionIdx = 0;
-                    for (String dest : listenerDestinationsMap.get(listener.getClass().getCanonicalName())) {
+                    for (String dest : listener.getDestinations()) {
+                    //for (String dest : listenerDestinationsMap.get(listener.getClass().getCanonicalName())) {
                         subscriptionName = subscriptionBaseName.concat("-".concat(dest + "-" + subscriptionIdx++));
                         cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
                         if (LOGGER.isInfoEnabled() || LOGGER.isDebugEnabled()) {
@@ -128,25 +134,21 @@ public class JmsClient {
      * @see net.sfr.tv.jms.client.wrapper.ListenerWrapper
      *
      * @param lifeCycleControllerClassName The name of the LifecycleController class to load and
-     * @param listenerClassNames Comma-separated list of listener class names. use.
+     * @param destinations Destinations to bind to
      * @return the new instance of the LifecycleControllerInterface
      * @throws ResourceInitializerException
      */
-    private void instantiateLifecycleController(String lifecycleControllerClassName, Set<String> listenerClassNames) throws ResourceInitializerException {
-        
-        ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+    private LifecycleController instantiateLifecycleController(final Class lifeCycleControllerClass, final String[] destinations) throws ResourceInitializerException {
 
         try {
-            Class lcClass = systemClassLoader.loadClass(lifecycleControllerClassName);
-            if (LifecycleController.class.isAssignableFrom(lcClass)) {
-                Constructor ct = lcClass.getConstructor();
-                LOGGER.info("Using custom LifecycleControllerInterface : ".concat(lcClass.getName()));
-                lifecycleController = (LifecycleController) ct.newInstance();
-                registerListeners(listenerClassNames);
+            if (LifecycleController.class.isAssignableFrom(lifeCycleControllerClass)) {
+                Constructor ct = lifeCycleControllerClass.getConstructor(String[].class);
+                LOGGER.info("Using custom LifecycleController : ".concat(lifeCycleControllerClass.getName()));
+                return lifecycleController = (LifecycleController) ct.newInstance(new Object[] {destinations});
             } else {
-                throw new ResourceInitializerException(lcClass.getName().concat(" is not a subtype of ").concat(LifecycleController.class.getName()), null);
+                throw new ResourceInitializerException(lifeCycleControllerClass.getName().concat(" is not a subtype of ").concat(LifecycleController.class.getName()), null);
             }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
             throw new ResourceInitializerException(ex);
         }
     }
@@ -157,18 +159,18 @@ public class JmsClient {
      * @param listenerClassNames
      * @throws ResourceInitializerException
      */
-    private void registerListeners(Set<String> listenerClassNames) throws ResourceInitializerException {
+    /*private void registerListeners(final Map<String[], String> destinationsByListeners) throws ResourceInitializerException {
         ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
         try {
             // Message Listeners
-            for (String listenerClassName : listenerClassNames) {
-                Class listenerClass = systemClassLoader.loadClass(listenerClassName);
-                lifecycleController.registerListener(listenerClass);
+            for (String[] destinations : destinationsByListeners.keySet()) {
+                Class listenerClass = systemClassLoader.loadClass(destinationsByListeners.get(destinations));
+                lifecycleController.registerListener(listenerClass, destinations);
             }
         } catch (ClassNotFoundException e) {
             throw new ResourceInitializerException(e);
         }
-    }
+    }*/
 
     /**
      * Client shutdown : Sequential closure of JMS and user specific resources.
@@ -177,6 +179,7 @@ public class JmsClient {
      *
      * @see net.sfr.tv.jms.client.wrapper.ListenerWrapper#release()
      */
+    @Override
     public void shutdown() {
 
         for (AbstractConnectionManager cnxManager : cnxManagers.values()) {

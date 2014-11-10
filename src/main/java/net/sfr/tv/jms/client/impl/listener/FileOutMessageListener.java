@@ -15,7 +15,6 @@
  */
 package net.sfr.tv.jms.client.impl.listener;
 
-import net.sfr.tv.jms.client.api.MessageListenerWrapper;
 import java.io.File;
 import java.nio.ByteBuffer;
 import javax.jms.Message;
@@ -38,9 +37,9 @@ public class FileOutMessageListener extends AbstractMessageListener {
     
     private final SequentialFile out;
     
-    public FileOutMessageListener() throws Exception {
+    public FileOutMessageListener(final String[] destinations) throws Exception {
         
-        super();
+        super(destinations);
         
         fileName = System.getProperty("listener.file.output", "");
         File wrapper = new File(fileName);

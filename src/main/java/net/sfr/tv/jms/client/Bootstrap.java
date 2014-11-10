@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import net.sfr.tv.exceptions.ResourceInitializerException;
+import net.sfr.tv.jms.client.api.JmsClient;
+import net.sfr.tv.jms.client.impl.LifecycleControllerImpl;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -44,6 +46,8 @@ import org.apache.log4j.PropertyConfigurator;
 public class Bootstrap {
 
     private static final List<String> systemProperties = new ArrayList<>();
+    
+    private static final String VERSION = "1.2.5";
 
     static {
         systemProperties.add("java.vm.version");
@@ -62,25 +66,19 @@ public class Bootstrap {
      */
     public static void main(String[] args) {
         try {
-            /* Get the main properties file */
-            Properties mainProps = new Properties();
-            mainProps.load(Bootstrap.class.getResourceAsStream("/project.properties"));
-            String version = mainProps.getProperty("version");
-            String log4jProperties = mainProps.getProperty("properties.log4j", "log4j.properties");
-            String jmsProperties = mainProps.getProperty("properties.jms", "jms.properties");
-            String cnxFactoryJndi = mainProps.getProperty("connectionfactory.default", "PreAckConsumerConnectionFactory");
-            String defaultHandler = mainProps.getProperty("handler.default");
-            String defaultListener = mainProps.getProperty("listener.default");
+
+            String jndiCnxFactory = "PreAckConsumerConnectionFactory";
 
             /* Get a configuration path property, consider configuration is in the binary directory instead */
             String configurationPath = System.getProperty("config.path", "/");
-            System.out.println("Hello, this is the Jalam JMS Client, v" + version);
+            
+            System.out.println("Hello, this is the Jalam JMS Client, v" + VERSION);
             System.out.println("Loading configuration from " + configurationPath + " ...");
 
             /* Instantiate Logger */
             try {
                 Properties logProps = new Properties();
-                String log4jfile = configurationPath.concat("/").concat(log4jProperties);
+                String log4jfile = configurationPath.concat("/").concat("log4j.properties");
                 InputStream is = Bootstrap.class.getResourceAsStream(log4jfile);
                 if (is != null) {
                     logProps.load(is);
@@ -91,6 +89,7 @@ public class Bootstrap {
             } catch (FileNotFoundException ex) {
                 System.out.println("Log4J configuration not found, it's now the wrapper responsability to configure logging !");
             }
+            
             Logger LOGGER = Logger.getLogger(Bootstrap.class);
             LOGGER.debug("Logging initialized");
 
@@ -100,7 +99,6 @@ public class Bootstrap {
             String subscriptionName = null;
             String preferredServer = null;
             String selector = "";
-            String jndiConnectionFactory = cnxFactoryJndi;
             Boolean isTopicSubscription = Boolean.TRUE;
             Boolean isDurableSubscription = Boolean.FALSE;
             Boolean unsubscribeAndExit = Boolean.FALSE;
@@ -125,7 +123,7 @@ public class Bootstrap {
                         unsubscribeAndExit = Boolean.TRUE;
                         break;
                     case CONNECTION_FACTORY:
-                        jndiConnectionFactory = args[++i];
+                        jndiCnxFactory = args[++i];
                         break;
                     case PREFERRED_SERVER:
                         preferredServer = args[++i];
@@ -138,7 +136,7 @@ public class Bootstrap {
                         break;
                 }
             }
-            if (configurationPath == null && destination == null || subscriptionName == null) {
+            if ((configurationPath == null && destination == null) || subscriptionName == null) {
                 LOGGER.info("Usage : ");
                 LOGGER.info("\tjava (-Dconfig.path=your.configPath) (-Dhandler.class=your.lifeCycleController) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
                 LOGGER.info("\t -d  : Destination JNDI name. Mandatory.");
@@ -159,7 +157,7 @@ public class Bootstrap {
             }
             if (clientId == null || clientId.trim().equals("")) {
                 // If not specified, a default clientId will be jalam-X.Y@hostname (reverse lookup)
-                clientId = "jalam-".concat(version).concat("@").concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));
+                clientId = "jalam-".concat(VERSION).concat("@").concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));
             }
 
             /* Log Runtime Data */
@@ -177,71 +175,85 @@ public class Bootstrap {
             /* Get JMS Properties to get lists of JMS servers */
             Properties jmsProps = new Properties();
             try {
-                InputStream is = Bootstrap.class.getResourceAsStream(configurationPath.concat("/").concat(jmsProperties));
+                InputStream is = Bootstrap.class.getResourceAsStream(configurationPath.concat("/").concat("jms.properties"));
                 if (is != null) {
                     jmsProps.load(is);
                 } else {
-                    jmsProps.load(new FileInputStream(configurationPath.concat("/").concat(jmsProperties)));
+                    jmsProps.load(new FileInputStream(configurationPath.concat("/").concat("jms.properties")));
                 }
             } catch (FileNotFoundException ex) {
-                LOGGER.fatal("Unable to find " + jmsProperties + " server configuration file, please read the doc !");
+                LOGGER.fatal("Unable to find jms.properties configuration file, please read the doc !");
+                System.exit(1);
+            }
+
+            final JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(jmsProps, null);
+            Class lifecycleControllerClass = null;
+            try {
+                lifecycleControllerClass = System.getProperty("handler.class") != null ? ClassLoader.getSystemClassLoader().loadClass(System.getProperty("handler.class")) : LifecycleControllerImpl.class;
+            } catch (ClassNotFoundException ex) {
+                LOGGER.fatal("Class not found ! : ".concat(System.getProperty("handler.class")));
                 System.exit(1);
             }
             
-            JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(jmsProps, null);
+            final String listenerClassName = System.getProperty("listener.class");
 
-            String lifecycleControllerClassName = System.getProperty("handler.class", defaultHandler);
-            
-            Map<String, String[]> listenerByDestinations = new HashMap<>();
+            final JmsClient client;
             
             if (jmsProps.containsKey("config.listeners")) {
                 // COMPLEX LISTENERS/DESTINATIONS DEFINED IN jms.properties
+                Map<String[], String> destinationsByListeners = new HashMap<>();
                 String listenerClassNames = jmsProps.getProperty("config.listeners");
                 for (String listenerClass : Arrays.asList(listenerClassNames.split("\\,"))) {
                     String destinationsString = jmsProps.getProperty(listenerClass.concat(".destinations"), null);
-                    /*if (destinationsString == null) {
-                        if (listenerClass.equals(defaultListener)) {
-                            destinationsString = destination;
-                        } else {
-                            throw new ResourceInitializerException(new Throwable("Destination for ".concat(listenerClass).concat(" could not be found. !")));
-                        }
-                    }*/
-                    listenerByDestinations.put(listenerClass, destinationsString.split("\\,"));
+                    destinationsByListeners.put(destinationsString.split("\\,"), listenerClass);
                 }
+
+                client = new MultiListenersJmsClientImpl(
+                        jndiProviderConfig,
+                        preferredServer,
+                        isTopicSubscription,
+                        isDurableSubscription,
+                        clientId,
+                        subscriptionName,
+                        selector,
+                        lifecycleControllerClass,
+                        destinationsByListeners,
+                        jndiCnxFactory);
+
             } else {
-                // SIMPLE LISTENER/DESTINATION BINDING
-                listenerByDestinations.put(System.getProperty("listener.class", defaultListener), new String[] {destination});
+
+                client = new JmsClientImpl(
+                        jndiProviderConfig,
+                        preferredServer,
+                        isTopicSubscription,
+                        isDurableSubscription,
+                        clientId,
+                        subscriptionName,
+                        selector,
+                        lifecycleControllerClass,
+                        listenerClassName,
+                        destination.split("\\,"),
+                        jndiCnxFactory);
             }
-            
-            //String listenerClassNames = System.getProperty("listener.class", defaultListener);
-            
+
             /* BOOTSTRAP */
-            final RunnableJmsClient client = new RunnableJmsClient(
-                    jndiProviderConfig,
-                    preferredServer,
-                    isTopicSubscription,
-                    (unsubscribeAndExit ? Boolean.FALSE : isDurableSubscription),
-                    clientId,
-                    subscriptionName,
-                    selector,
-                    lifecycleControllerClassName,
-                    listenerByDestinations,
-                    jndiConnectionFactory);
+            final RunnableJmsClient runnable = new RunnableJmsClient(client);
+            
             if (unsubscribeAndExit) {
-                client.shutdown();
+                runnable.shutdown();
                 System.exit(0);
             }
-            Thread clientThread = new Thread(client);
+            Thread clientThread = new Thread(runnable);
             clientThread.start();
 
             /* Register a Shutdown Hook (handle SIGTERM, Ctrl+C, ..) */
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
-                    synchronized (client.monitor) {
-                        client.monitor.notify();
+                    synchronized (runnable.monitor) {
+                        runnable.monitor.notify();
                     }
-                    client.shutdown();
+                    runnable.shutdown();
                 }
             });
 

@@ -15,9 +15,8 @@
  */
 package net.sfr.tv.jms.client;
 
-import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.model.JndiProviderConfiguration;
+import net.sfr.tv.jms.client.api.JmsClient;
 import org.apache.log4j.Logger;
 
 /**
@@ -36,31 +35,14 @@ public class RunnableJmsClient implements Runnable {
     private final JmsClient client;
     
     /**
-     * @see net.sfr.tv.jms.client.JmsClient
+     * @see net.sfr.tv.jms.client.JmsClientImpl
+     * 
+     * @param client
+     * @throws ResourceInitializerException 
      */
-    public RunnableJmsClient(
-            JndiProviderConfiguration jndiProviderConfig,
-            String preferredServer,
-            Boolean isTopicSubscription,
-            Boolean isDurableSubscription,
-            String clientId,
-            String subscriptionBaseName,
-            String selector,
-            String lifecycleControllerClassName,
-            Map<String, String[]> listenerDestinationsMap,
-            String cnxFactoryJndiName) throws ResourceInitializerException {
+    public RunnableJmsClient(final JmsClient client) throws ResourceInitializerException {
         
-        client = new JmsClient(
-                jndiProviderConfig,
-                preferredServer,
-                isTopicSubscription,
-                isDurableSubscription,
-                clientId,
-                subscriptionBaseName,
-                selector,
-                lifecycleControllerClassName,
-                listenerDestinationsMap,
-                cnxFactoryJndiName);
+        this.client = client;
     }
     
     /**

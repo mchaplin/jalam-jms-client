@@ -35,8 +35,8 @@ public class LoggerMessageListener extends AbstractMessageListener {
         
     private final String outputProperty;
     
-    public LoggerMessageListener() {
-        super();
+    public LoggerMessageListener(final String[] destinations) {
+        super(destinations);
         String loggerName = System.getProperty("listener.logger.name");
         if (loggerName != null && loggerName.trim().length() > 0) {
             LOGGER = Logger.getLogger(loggerName);
