@@ -37,17 +37,26 @@ public class LifecycleControllerImpl implements LifecycleController {
     private final Logger LOGGER = Logger.getLogger(LifecycleControllerImpl.class);
 
     private final Map<Integer, MessageListenerWrapper> listeners = new HashMap<>();
+    
+    private final String[] destinations;
 
     private int insertIdx = 0;
     private int retrievalIdx = 0;
 
-    public LifecycleControllerImpl(Class listenerClass, final String[] destinations) throws ResourceInitializerException {
-        if (listenerClass == null) {
-            listenerClass = LoggerMessageListener.class;
-        }
-        listeners.put(insertIdx++, createListener(listenerClass, destinations));
-        LOGGER.info("Listener registered : ".concat(listenerClass.getName()));
+    public LifecycleControllerImpl(final String[] destinations) {
+        this.destinations = destinations;
     }
+
+    @Override
+    public void initListener(Class listener) throws ResourceInitializerException {
+        if (listener == null) {
+            listener = LoggerMessageListener.class;
+        }
+        listeners.put(insertIdx++, createListener(listener, destinations));
+        LOGGER.info("Listener registered : ".concat(listener.getName()));        
+    }
+    
+    
 
     @Override
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException {

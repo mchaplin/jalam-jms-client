@@ -19,6 +19,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.JmsClient;
@@ -78,6 +79,14 @@ public class JmsClientImpl implements JmsClient {
         
         lifecycleController = instantiateLifecycleController(lifecycleControllerClass, destinations);
         
+        try {
+            Class listenerClass = Class.forName(listenerClassName);
+            lifecycleController.initListener(listenerClass);
+        } catch (ClassNotFoundException ex) {
+            throw new ResourceInitializerException("Listener class not found ! : ".concat(listenerClassName), ex);
+        }
+        
+        
         /*if (destinationsByListeners != null) {
             registerListeners(destinationsByListeners);
         }*/
@@ -135,6 +144,7 @@ public class JmsClientImpl implements JmsClient {
      *
      * @param lifeCycleControllerClassName The name of the LifecycleController class to load and
      * @param destinations Destinations to bind to
+     * 
      * @return the new instance of the LifecycleControllerInterface
      * @throws ResourceInitializerException
      */

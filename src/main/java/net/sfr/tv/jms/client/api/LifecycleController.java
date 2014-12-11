@@ -32,8 +32,16 @@ import net.sfr.tv.exceptions.ResourceInitializerException;
 public interface LifecycleController {
 
     /**
-     * Starts the message listener
-     * Called by the main client upon startup.
+     * Listener initialization.
+     * 
+     * @param listener  Value of system property 'listener.class'.
+     * @throws ResourceInitializerException
+     */
+    public void initListener(Class listener) throws ResourceInitializerException;
+    
+    /**
+     * Called upon startup, before starting the JMS connection.
+     * Initialize your ressources in here.
      */
     public void run();
     
@@ -58,6 +66,7 @@ public interface LifecycleController {
      * 
      * @throws ResourceInitializerException
      */
+    @Deprecated
     public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException;
  
     /**
