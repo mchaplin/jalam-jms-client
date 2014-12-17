@@ -27,6 +27,7 @@ import java.util.Properties;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.JmsClient;
 import net.sfr.tv.jms.client.impl.LifecycleControllerImpl;
+import net.sfr.tv.jms.client.impl.listener.LoggerMessageListener;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -187,6 +188,7 @@ public class Bootstrap {
             }
 
             final JndiProviderConfiguration jndiProviderConfig = new JndiProviderConfiguration(jmsProps, null);
+            
             Class lifecycleControllerClass = null;
             try {
                 lifecycleControllerClass = System.getProperty("handler.class") != null ? ClassLoader.getSystemClassLoader().loadClass(System.getProperty("handler.class")) : LifecycleControllerImpl.class;
@@ -195,8 +197,6 @@ public class Bootstrap {
                 System.exit(1);
             }
             
-            final String listenerClassName = System.getProperty("listener.class");
-
             final JmsClient client;
             
             if (jmsProps.containsKey("config.listeners")) {
@@ -221,6 +221,14 @@ public class Bootstrap {
                         jndiCnxFactory);
 
             } else {
+                
+                Class listenerClass = null;
+                try {
+                    listenerClass = System.getProperty("listener.class") != null ? ClassLoader.getSystemClassLoader().loadClass(System.getProperty("listener.class")) : LoggerMessageListener.class;
+                } catch (ClassNotFoundException ex) {
+                    LOGGER.fatal("Class not found ! : ".concat(System.getProperty("handler.class")));
+                    System.exit(1);
+                }
 
                 client = new JmsClientImpl(
                         jndiProviderConfig,
@@ -231,7 +239,7 @@ public class Bootstrap {
                         subscriptionName,
                         selector,
                         lifecycleControllerClass,
-                        listenerClassName,
+                        listenerClass,
                         destination.split("\\,"),
                         jndiCnxFactory);
             }

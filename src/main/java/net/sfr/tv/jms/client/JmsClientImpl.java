@@ -19,7 +19,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import javax.jms.JMSException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.client.api.JmsClient;
@@ -59,7 +58,7 @@ public class JmsClientImpl implements JmsClient {
      * @param subscriptionBaseName JMS subscription name prefix
      * @param selector JMS selector
      * @param lifecycleControllerClass LifecycleController class
-     * @param listenerClassName name of the JMS Listener class
+     * @param listenerClass name of the JMS Listener class
      * @param destinations JNDI destinations to bind to
      * @param cnxFactoryJndiName JMS connection factory JNDI name
      * @throws net.sfr.tv.exceptions.ResourceInitializerException
@@ -73,19 +72,12 @@ public class JmsClientImpl implements JmsClient {
             String subscriptionBaseName,
             String selector,
             Class lifecycleControllerClass,
-            String listenerClassName,
+            Class listenerClass,
             String[] destinations,
             String cnxFactoryJndiName) throws ResourceInitializerException {
         
         lifecycleController = instantiateLifecycleController(lifecycleControllerClass, destinations);
-        
-        try {
-            Class listenerClass = Class.forName(listenerClassName);
-            lifecycleController.initListener(listenerClass);
-        } catch (ClassNotFoundException ex) {
-            throw new ResourceInitializerException("Listener class not found ! : ".concat(listenerClassName), ex);
-        }
-        
+        lifecycleController.initListener(listenerClass);
         
         /*if (destinationsByListeners != null) {
             registerListeners(destinationsByListeners);
@@ -93,20 +85,21 @@ public class JmsClientImpl implements JmsClient {
 
         // Connect and Subscribe listeners to destinations
         cnxManagers = new TreeMap<>();
-        int consumerIdx = 0;
+        int idxListener = 0;
         for (String group : jndiProviderConfig.getGroups()) {
             try {
                 for (MessageListenerWrapper listener : lifecycleController.getListeners()) {
-                    String clientUid = clientId.concat("/" + consumerIdx++);
-                    InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientUid, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
+                    if (lifecycleController.getListeners().size() > 1) {
+                        clientId = clientId.concat("/" + idxListener++);
+                    }
+                    InboundConnectionManager cnxManager = new InboundConnectionManager(group, jndiProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, jndiProviderConfig.getCredentials(), listener);
                     cnxManager.connect(2);
                     LOGGER.info("Connection created for ".concat(listener.getName()));
 
                     String subscriptionName;
                     int subscriptionIdx = 0;
                     for (String dest : listener.getDestinations()) {
-                    //for (String dest : listenerDestinationsMap.get(listener.getClass().getCanonicalName())) {
-                        subscriptionName = subscriptionBaseName.concat("-".concat(dest + "-" + subscriptionIdx++));
+                        subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(listener.getDestinations().length > 1 ? "-" + subscriptionIdx++ : "");
                         cnxManager.subscribe(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector);
                         if (LOGGER.isInfoEnabled() || LOGGER.isDebugEnabled()) {
                             LOGGER.info("Destination : ".concat(dest));
@@ -117,7 +110,7 @@ public class JmsClientImpl implements JmsClient {
                             LOGGER.info("Servers groups : ".concat(String.valueOf(jndiProviderConfig.getGroups().size())));
                         }
                     }
-                    cnxManagers.put(clientUid, cnxManager);
+                    cnxManagers.put(clientId, cnxManager);
                 }
             } catch (Exception ex) {
                 LOGGER.error("Unable to start a listener/context binded to : ".concat(group), ex);
@@ -132,8 +125,8 @@ public class JmsClientImpl implements JmsClient {
                 cnxManager.start();
             }
         } catch (JMSException ex) {
-            LOGGER.fatal("Unable to start JMS connection !", ex);
-            System.exit(1);
+            throw new ResourceInitializerException(ex);
+            //LOGGER.fatal("Unable to start JMS connection !", ex);
         }
     }
 
