@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalam</artifactId>
-  <version>1.2.5-SNAPSHOT</version>
+  <version>1.2.6-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Jalam J2SE JMS Client</name>
 
@@ -26,7 +26,7 @@
     <dependency.hornetq.version>2.3.19.Final</dependency.hornetq.version>
     <dependency.log4j.version>1.2.17</dependency.log4j.version>
     <dependency.commons-codec.version>1.8</dependency.commons-codec.version>
-    <dependency.jalco.version>1.0.6</dependency.jalco.version>
+    <dependency.jalco.version>1.1.0-SNAPSHOT</dependency.jalco.version>
     <dependency.jnp-client.version>5.0.5.Final</dependency.jnp-client.version>
     <dependency.vertx.version>2.1</dependency.vertx.version>
   </properties>
@@ -142,7 +142,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>net.sfr.tv.jms.client.Bootstrap</mainClass>
+              <mainClass>net.sfr.tv.messaging.client.impl.Bootstrap</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -155,7 +155,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>net.sfr.tv.jms.client.Bootstrap</mainClass>
+              <mainClass>net.sfr.tv.messaging.client.impl.Bootstrap</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

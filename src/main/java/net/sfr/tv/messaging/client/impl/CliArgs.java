@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.messaging.client.impl;
 
 /**
- * Because it had to be run over Java6...
+ * Because it had to be compatible with outdated Java6...
  * 
  * @author matthieu.chaplin@sfr.com
  */
@@ -30,9 +30,10 @@ public enum CliArgs {
     FILTER("-f"),
     UNSUBSCRIBE("-u"),
     CONNECTION_FACTORY("-cf"),
-    PREFERRED_SERVER("-t");
+    PREFERRED_SERVER("-t"),
+    MODE_HQCORE("-hq");
     
-    private String value;
+    private final String value;
 
     private CliArgs(String value) {
         this.value = value;

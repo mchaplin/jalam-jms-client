@@ -21,16 +21,17 @@ import com.codahale.metrics.MetricRegistry;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import net.sfr.tv.jms.client.impl.AbstractMessageListener;
+import javax.jms.MessageListener;
+import net.sfr.tv.jms.client.impl.AbstractMessageConsumer;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu
  */
-public class ThroughputMessageListener extends AbstractMessageListener {
+public class ThroughputMessageListener extends AbstractMessageConsumer implements MessageListener {
     
-    private static final Logger LOGGER = Logger.getLogger(ThroughputMessageListener.class.getName());
+    private static final Logger logger = Logger.getLogger(ThroughputMessageListener.class.getName());
     
     private static final MetricRegistry metrics = new MetricRegistry();
     
@@ -49,6 +50,6 @@ public class ThroughputMessageListener extends AbstractMessageListener {
     @Override
     public void onMessage(Message msg) {
         messagesMeter.mark();
-        try { msg.acknowledge(); } catch (JMSException e) {LOGGER.error(msg, e);};
+        try { msg.acknowledge(); } catch (JMSException e) {logger.error(msg, e);};
     }
 }

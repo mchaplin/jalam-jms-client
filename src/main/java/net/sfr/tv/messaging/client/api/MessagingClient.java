@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.client.api;
+package net.sfr.tv.messaging.client.api;
+
+import net.sfr.tv.exceptions.ResourceInitializerException;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public interface JmsClient {
+public interface MessagingClient {
+    
+    void start() throws ResourceInitializerException;
     
     void shutdown();
     

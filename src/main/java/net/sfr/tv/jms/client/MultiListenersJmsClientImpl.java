@@ -17,14 +17,15 @@ package net.sfr.tv.jms.client;
 
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.JmsClient;
-import net.sfr.tv.jms.model.JndiProviderConfiguration;
+import net.sfr.tv.messaging.client.api.MessagingClient;
+import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
+import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class MultiListenersJmsClientImpl implements JmsClient {
+public class MultiListenersJmsClientImpl extends AbstractMessagingClient {
 
     /**
      * Constructor.
@@ -42,7 +43,7 @@ public class MultiListenersJmsClientImpl implements JmsClient {
      * @throws net.sfr.tv.exceptions.ResourceInitializerException
      */
     public MultiListenersJmsClientImpl(
-            JndiProviderConfiguration jndiProviderConfig,
+            MessagingProvidersConfiguration msgingProviderConfig,
             String preferredServer,
             Boolean isTopicSubscription,
             Boolean isDurableSubscription,
@@ -52,6 +53,10 @@ public class MultiListenersJmsClientImpl implements JmsClient {
             Class lifecycleControllerClass,
             Map<String[], String> destinationsByListeners,
             String cnxFactoryJndiName) throws ResourceInitializerException {
+        
+        //super(msgingProviderConfig, preferredServer, subscriptionBaseName, selector, lifecycleControllerClass, listenerClass, destinations);
+        super(msgingProviderConfig, preferredServer, subscriptionBaseName, selector, lifecycleControllerClass, null, null);
+        // TODO
         
     }
 

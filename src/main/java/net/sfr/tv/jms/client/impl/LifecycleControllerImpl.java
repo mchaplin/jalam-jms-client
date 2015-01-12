@@ -18,15 +18,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.LifecycleController;
-import net.sfr.tv.jms.client.api.MessageListenerWrapper;
+import net.sfr.tv.messaging.client.api.LifecycleController;
+import net.sfr.tv.messaging.api.MessageConsumer;
 import net.sfr.tv.jms.client.impl.listener.LoggerMessageListener;
 import org.apache.log4j.Logger;
 
 /**
  * An "embedded" Lifecycle Controller. Feel free to create your own to do more sophisticated things !
  *
- * @see net.sfr.tv.jms.client.api.LifecycleController
+ * @see net.sfr.tv.messaging.client.api.LifecycleController
  *
  * @author matthieu.chaplin@sfr.com
  * @author pierre.cheynier@sfr.com
@@ -34,9 +34,9 @@ import org.apache.log4j.Logger;
  */
 public class LifecycleControllerImpl implements LifecycleController {
 
-    private final Logger LOGGER = Logger.getLogger(LifecycleControllerImpl.class);
+    private final Logger logger = Logger.getLogger(LifecycleControllerImpl.class);
 
-    private final Map<Integer, MessageListenerWrapper> listeners = new HashMap<>();
+    private final Map<Integer, MessageConsumer> listeners = new HashMap<>();
     
     private final String[] destinations;
 
@@ -53,19 +53,19 @@ public class LifecycleControllerImpl implements LifecycleController {
             listener = LoggerMessageListener.class;
         }
         listeners.put(insertIdx++, createListener(listener, destinations));
-        LOGGER.info("Listener registered : ".concat(listener.getName()));        
+        logger.info("Listener registered : ".concat(listener.getName()));        
     }
     
     
 
     @Override
-    public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException {
+    public MessageConsumer getListener(Class listenerClass) throws ResourceInitializerException {
         /*if (insertIdx <= retrievalIdx) {
             listeners.put(insertIdx++, createListener(listenerClass));
         }*/
         // RETRIEVE A LISTENER AND INCREMENT POSITION IDX.
-        MessageListenerWrapper ret = listeners.get(retrievalIdx++);
-        LOGGER.info("Will be using listener instance : " + ret.toString());
+        MessageConsumer ret = listeners.get(retrievalIdx++);
+        logger.info("Will be using listener instance : " + ret.toString());
         return ret;
     }
 
@@ -78,13 +78,13 @@ public class LifecycleControllerImpl implements LifecycleController {
     /*@Override
      public void registerListener(final Class listenerClass, final String[] destinations) throws ResourceInitializerException {
      listeners.put(insertIdx++, createListener(listenerClass, destinations));
-     LOGGER.debug("Listener registered : ".concat(listenerClass.getName()));
+     logger.debug("Listener registered : ".concat(listenerClass.getName()));
      }*/
-    private MessageListenerWrapper createListener(final Class listenerClass, final String[] destinations) throws ResourceInitializerException {
-        MessageListenerWrapper ret = null;
+    private MessageConsumer createListener(final Class listenerClass, final String[] destinations) throws ResourceInitializerException {
+        MessageConsumer ret = null;
         try {
             Constructor ct = listenerClass.getConstructor(String[].class);
-            ret = (MessageListenerWrapper) ct.newInstance(new Object[]{destinations});
+            ret = (MessageConsumer) ct.newInstance(new Object[]{destinations});
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             throw new ResourceInitializerException(ex);
         }
@@ -92,7 +92,7 @@ public class LifecycleControllerImpl implements LifecycleController {
     }
 
     @Override
-    public Collection<MessageListenerWrapper> getListeners() {
+    public Collection<MessageConsumer> getListeners() {
         return listeners.values();
     }
 
@@ -102,7 +102,7 @@ public class LifecycleControllerImpl implements LifecycleController {
 
     @Override
     public void release() {
-        for (MessageListenerWrapper listener : listeners.values()) {
+        for (MessageConsumer listener : listeners.values()) {
             listener.release();
         }
     }

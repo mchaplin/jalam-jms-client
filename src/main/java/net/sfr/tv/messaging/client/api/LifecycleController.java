@@ -13,10 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.client.api;
+package net.sfr.tv.messaging.client.api;
 
 import java.util.Collection;
 import net.sfr.tv.exceptions.ResourceInitializerException;
+import net.sfr.tv.messaging.api.MessageConsumer;
 
 /**
  * Wrap a @see javax.jms.MessageListener.
@@ -56,7 +57,7 @@ public interface LifecycleController {
      * 
      * @return 
      */
-    public Collection<MessageListenerWrapper> getListeners();
+    public Collection<MessageConsumer> getListeners();
     
     /**
      * Returns the wrapped listener
@@ -67,7 +68,7 @@ public interface LifecycleController {
      * @throws ResourceInitializerException
      */
     @Deprecated
-    public MessageListenerWrapper getListener(Class listenerClass) throws ResourceInitializerException;
+    public MessageConsumer getListener(Class listenerClass) throws ResourceInitializerException;
  
     /**
      * Register a new Listener

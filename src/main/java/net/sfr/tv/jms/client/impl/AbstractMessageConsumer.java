@@ -15,19 +15,19 @@
  */
 package net.sfr.tv.jms.client.impl;
 
-import net.sfr.tv.jms.client.api.MessageListenerWrapper;
+import net.sfr.tv.messaging.api.MessageConsumer;
 
 /**
  *
  * @author matthieu
  */
-public abstract class AbstractMessageListener implements MessageListenerWrapper {
+public abstract class AbstractMessageConsumer implements MessageConsumer {
     
     protected String name;
     
     protected final String[] destinations;
     
-    public AbstractMessageListener(final String[] destinations) {
+    public AbstractMessageConsumer(final String[] destinations) {
         this.name = getClass().getName();
         this.destinations = destinations;
     }

@@ -19,33 +19,18 @@ import java.util.Enumeration;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.jms.client.impl.AbstractMessageListener;
-import org.apache.log4j.Logger;
+import net.sfr.tv.messaging.client.impl.AbstractLoggerConsumer;
 
 /**
  * A simple message listener, printing message content to logging facility.
  * 
  */
-public class LoggerMessageListener extends AbstractMessageListener {
-
-    private Logger LOGGER;
-    
-    private final String outputType;
-        
-    private final String outputProperty;
+public class LoggerMessageListener extends AbstractLoggerConsumer implements MessageListener {
     
     public LoggerMessageListener(final String[] destinations) {
         super(destinations);
-        String loggerName = System.getProperty("listener.logger.name");
-        if (loggerName != null && loggerName.trim().length() > 0) {
-            LOGGER = Logger.getLogger(loggerName);
-        } else {
-            LOGGER = Logger.getLogger(LoggerMessageListener.class);
-        }
-        
-        outputType = System.getProperty("listener.output.type", "FULL");
-        outputProperty = System.getProperty("listener.output.property");
     }
     
     @Override
@@ -54,7 +39,7 @@ public class LoggerMessageListener extends AbstractMessageListener {
         try {
 
             if (outputType.equals("FULL")) {
-                LOGGER.info("Received message :: ID : "
+                logger.info("Received message :: ID : "
                         .concat(msg.getJMSMessageID() != null ? msg.getJMSMessageID() : "(?)")
                         .concat(", type : ").concat(msg.getJMSType() != null ? msg.getJMSType() : "(?)")
                         .concat(", tstamp : ").concat(String.valueOf(msg.getJMSTimestamp()))
@@ -70,13 +55,13 @@ public class LoggerMessageListener extends AbstractMessageListener {
                     prop = (String) enm.nextElement();
                     try {
                         val = msg.getStringProperty(prop);
-                        LOGGER.info("\t".concat(prop).concat(" : ").concat(val != null ? val : "null"));
+                        logger.info("\t".concat(prop).concat(" : ").concat(val != null ? val : "null"));
                     } catch (JMSException ex) {
                         try {
                             oVal = msg.getObjectProperty(prop);
-                            LOGGER.info("\t".concat(prop).concat(" : ").concat(oVal != null ? oVal.toString() : "null"));
+                            logger.info("\t".concat(prop).concat(" : ").concat(oVal != null ? oVal.toString() : "null"));
                         } catch (JMSException ex2) {
-                            LOGGER.error("Unable to retrieve value for ".concat(prop));
+                            logger.error("Unable to retrieve value for ".concat(prop));
                         }
                     }
                 }
@@ -85,19 +70,19 @@ public class LoggerMessageListener extends AbstractMessageListener {
             if (!outputType.equals("PROPERTY")) {
                 if (TextMessage.class.isAssignableFrom(msg.getClass())) {
                     String text = ((TextMessage) msg).getText();
-                    
-                    LOGGER.info("[".concat(String.valueOf(text.length())).concat("] : ").concat(text));
+                    //logger.info("[".concat(String.valueOf(text.length())).concat("] : ").concat(text));
+                    logger.info(text);
                 } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
                     BytesMessage bm = (BytesMessage) msg;
                     byte[] body = new byte[(int)bm.getBodyLength()];
                     bm.readBytes(body);
 
-                    LOGGER.info("[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body)));
+                    logger.info("[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body)));
                 }   
             }
             
             if (outputType.equals("PROPERTY")) {
-                LOGGER.info(msg.getStringProperty(outputProperty));
+                logger.info(msg.getStringProperty(outputProperty));
             }
 
             // ACK the message to remove it from the queue.
@@ -108,7 +93,7 @@ public class LoggerMessageListener extends AbstractMessageListener {
                 // Connection failure, try failover ?
                 
             }
-            LOGGER.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
         }
     }
 }

@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.messaging.client.impl;
 
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.client.api.JmsClient;
+import net.sfr.tv.messaging.client.api.MessagingClient;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu
  */
-public class RunnableJmsClient implements Runnable {
+public class RunnableMessagingClient implements Runnable {
     
-    private static final Logger LOGGER = Logger.getLogger(RunnableJmsClient.class);
+    private static final Logger logger = Logger.getLogger(RunnableMessagingClient.class);
     
     /**
      * Monitor pattern
      */
     public final Object monitor = new Object();
     
-    private final JmsClient client;
+    private final MessagingClient client;
     
     /**
      * @see net.sfr.tv.jms.client.JmsClientImpl
@@ -40,9 +40,9 @@ public class RunnableJmsClient implements Runnable {
      * @param client
      * @throws ResourceInitializerException 
      */
-    public RunnableJmsClient(final JmsClient client) throws ResourceInitializerException {
-        
+    public RunnableMessagingClient(final MessagingClient client) throws ResourceInitializerException {
         this.client = client;
+        this.client.start();
     }
     
     /**
@@ -50,18 +50,18 @@ public class RunnableJmsClient implements Runnable {
      */
     @Override
     public void run() {
-
+        
         // ... forever. The thread is waiting for someone to call notify() on the lock object.
         synchronized (monitor) {
             try {
                 monitor.wait();
             } catch (InterruptedException ex) {
-                LOGGER.warn("Got interrupted !");
+                logger.warn("Got interrupted !");
             }
         }
     }
     
     public void shutdown() {
-        client.shutdown();
+        this.client.shutdown();
     }
 }

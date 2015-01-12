@@ -18,8 +18,9 @@ package net.sfr.tv.jms.client.impl.listener;
 import java.io.File;
 import java.nio.ByteBuffer;
 import javax.jms.Message;
+import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.jms.client.impl.AbstractMessageListener;
+import net.sfr.tv.jms.client.impl.AbstractMessageConsumer;
 import org.apache.log4j.Logger;
 import org.hornetq.core.journal.SequentialFile;
 import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
@@ -29,9 +30,9 @@ import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class FileOutMessageListener extends AbstractMessageListener {
+public class FileOutMessageListener extends AbstractMessageConsumer implements MessageListener {
 
-    private final Logger LOGGER = Logger.getLogger(FileOutMessageListener.class);
+    private final Logger logger = Logger.getLogger(FileOutMessageListener.class);
     
     private final String fileName;
     
@@ -56,7 +57,7 @@ public class FileOutMessageListener extends AbstractMessageListener {
         try {
             out.close();
         } catch (Exception ex) {
-            LOGGER.warn("Unable to properly close " + fileName, ex);
+            logger.warn("Unable to properly close " + fileName, ex);
         } 
     }
     
@@ -83,7 +84,7 @@ public class FileOutMessageListener extends AbstractMessageListener {
             msg.acknowledge();
 
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
         }
     }
 }
