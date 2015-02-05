@@ -16,9 +16,10 @@
 package net.sfr.tv.hornetq.client.impl;
 
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.hornetq.HqCoreConnectionManager;
-import net.sfr.tv.messaging.api.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.MessageConsumer;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
@@ -55,7 +56,7 @@ public class HornetQClientImpl extends AbstractMessagingClient {
                         clientId = clientId.concat("/" + idxListener++);
                     }*/
                     ConsumerConnectionManager cnxManager = new HqCoreConnectionManager(group, msgingProviderConfig.getCredentials(), msgingProviderConfig.getServersGroup(group), preferredServer, (MessageHandler) listener);
-                    cnxManager.connect(2);
+                    cnxManager.connect(2, TimeUnit.SECONDS);
                     logger.info("Connection created for ".concat(listener.getName()));
 
                     String subscriptionName;
@@ -63,7 +64,7 @@ public class HornetQClientImpl extends AbstractMessagingClient {
                     for (String dest : listener.getDestinations()) {
                         subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(listener.getDestinations().length > 1 ? "-" + subscriptionIdx++ : "");
                         // FIXME : Handle topic/durable subscription booleans
-                        cnxManager.subscribe(new SubscriptionDescriptor(dest, true, true, subscriptionName, selector), 2);
+                        cnxManager.subscribe(new SubscriptionDescriptor(dest, true, true, subscriptionName, selector), 2, TimeUnit.SECONDS);
                         if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
                             logger.info("Destination : ".concat(dest));
                             logger.info("Subscription base name : ".concat(subscriptionBaseName));

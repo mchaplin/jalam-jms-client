@@ -15,14 +15,14 @@
  */
 package net.sfr.tv.messaging.client.impl;
 
-import net.sfr.tv.jms.client.impl.AbstractMessageConsumer;
+import net.sfr.tv.messaging.impl.MessageConsumerImpl;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class AbstractLoggerConsumer extends AbstractMessageConsumer {
+public abstract class AbstractLoggerConsumer extends MessageConsumerImpl {
  
     protected Logger logger;
     

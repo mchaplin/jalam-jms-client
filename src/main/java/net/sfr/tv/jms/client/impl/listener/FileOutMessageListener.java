@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.jms.client.impl.AbstractMessageConsumer;
+import net.sfr.tv.messaging.impl.MessageConsumerImpl;
 import org.apache.log4j.Logger;
 import org.hornetq.core.journal.SequentialFile;
 import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
@@ -30,7 +30,7 @@ import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class FileOutMessageListener extends AbstractMessageConsumer implements MessageListener {
+public class FileOutMessageListener extends MessageConsumerImpl implements MessageListener {
 
     private final Logger logger = Logger.getLogger(FileOutMessageListener.class);
     

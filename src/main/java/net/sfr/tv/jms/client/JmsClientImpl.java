@@ -15,11 +15,12 @@ package net.sfr.tv.jms.client;
 import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
 import net.sfr.tv.messaging.api.MessageConsumer;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import javax.jms.MessageListener;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.jms.cnxmgt.JmsConsumerConnectionManager;
-import net.sfr.tv.messaging.api.ConnectionManager;
-import net.sfr.tv.messaging.api.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.connection.ConnectionManager;
+import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
 import org.apache.log4j.Logger;
@@ -76,14 +77,14 @@ public class JmsClientImpl extends AbstractMessagingClient {
                         clientId = clientId.concat("/" + idxListener++);
                     }
                     ConsumerConnectionManager cnxManager = new JmsConsumerConnectionManager(group, msgingProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, msgingProviderConfig.getCredentials(), (MessageListener) listener);
-                    cnxManager.connect(2);
+                    cnxManager.connect(2, TimeUnit.SECONDS);
                     logger.info("Connection created for ".concat(listener.getName()));
 
                     String subscriptionName;
                     int subscriptionIdx = 0;
                     for (String dest : listener.getDestinations()) {
                         subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(listener.getDestinations().length > 1 ? "-" + subscriptionIdx++ : "");
-                        cnxManager.subscribe(new SubscriptionDescriptor(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector), 2);
+                        cnxManager.subscribe(new SubscriptionDescriptor(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector), 2, TimeUnit.SECONDS);
                         if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
                             logger.info("Destination : ".concat(dest));
                             logger.info("ClientID : ".concat(clientId));

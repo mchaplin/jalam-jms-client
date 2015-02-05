@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 matthieu.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,30 @@
 package net.sfr.tv.jms.client.impl.listener;
 
 import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.Meter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
+import javax.jms.TextMessage;
 import net.sfr.tv.messaging.impl.MessageConsumerImpl;
 import org.apache.log4j.Logger;
 
 /**
  *
- * @author matthieu
+ * @author matthieu.chaplin@sfr.com
  */
-public class ThroughputMessageListener extends MessageConsumerImpl implements MessageListener {
+public class LatencyListener extends MessageConsumerImpl implements MessageListener {
     
     private static final Logger logger = Logger.getLogger(ThroughputMessageListener.class.getName());
     
     private static final MetricRegistry metrics = new MetricRegistry();
     
-    private final Meter messagesMeter = metrics.meter("Throughput");
+    private final Histogram histogram = metrics.histogram("Latency");
     
-    public ThroughputMessageListener(final String[] destinations) {
+    public LatencyListener(final String[] destinations) {
         super(destinations);
         
         final ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
@@ -49,7 +51,22 @@ public class ThroughputMessageListener extends MessageConsumerImpl implements Me
 
     @Override
     public void onMessage(Message msg) {
-        messagesMeter.mark();
-        try { msg.acknowledge(); } catch (JMSException e) {logger.error(msg, e);};
+        
+        TextMessage tm = (TextMessage) msg;
+        long origStamp = 0;
+        try { 
+            
+            String[] keyVals = tm.getText().split("\\;");
+            for (String kv : keyVals) {
+                if (kv.startsWith("ts=")) {
+                    origStamp = Long.valueOf(kv.split("\\=")[1]);
+                }
+            }
+            
+            histogram.update(new Date().getTime() - origStamp);
+            
+            msg.acknowledge();
+        } catch (JMSException e) {logger.error(msg, e);};
     }
+    
 }

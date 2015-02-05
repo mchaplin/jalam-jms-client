@@ -78,7 +78,7 @@ public class LoggerMessageListener extends AbstractLoggerConsumer implements Mes
                     bm.readBytes(body);
 
                     logger.info("[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body)));
-                }   
+                }
             }
             
             if (outputType.equals("PROPERTY")) {

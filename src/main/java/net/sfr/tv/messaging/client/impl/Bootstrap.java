@@ -72,8 +72,6 @@ public class Bootstrap {
     public static void main(String[] args) {
         try {
 
-            String jndiCnxFactory = "PreAckConsumerConnectionFactory";
-
             /* Get a configuration path property, consider configuration is in the binary directory instead */
             String configurationPath = System.getProperty("config.path", "/");
             
@@ -97,10 +95,10 @@ public class Bootstrap {
             
             Logger logger = Logger.getLogger(Bootstrap.class);
             logger.debug("Logging initialized");
-
             
-            Boolean jmsMode = Boolean.TRUE;
             /* Retrieve and test consistency of arguments */
+            Boolean jmsMode = Boolean.TRUE;
+            String jndiCnxFactory = "PreAckConsumerConnectionFactory";
             String destination = null;
             String clientId = null;
             String subscriptionName = null;
@@ -146,7 +144,7 @@ public class Bootstrap {
                         break;
                 }
             }
-            if ((configurationPath == null && destination == null) || subscriptionName == null) {
+            if (destination == null || subscriptionName == null) {
                 logger.info("Usage : ");
                 logger.info("\tjava (-Dconfig.path=your.configPath) (-Dhandler.class=your.lifeCycleController) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p)  (-cf[connectionFactoryName]) <-f [filter]>\n");
                 logger.info("\t -d  : Destination JNDI name. Mandatory.");
@@ -165,11 +163,7 @@ public class Bootstrap {
                 logger.info("\t Subscribe to multiple destinations : java -jar jalam.jar -d /topic/1,/topic/2,/topic/3 -s mySubscriptionIdentifier");
                 System.exit(1);
             }
-            if (clientId == null || clientId.trim().equals("")) {
-                // If not specified, a default clientId will be jalam-X.Y@hostname (reverse lookup)
-                clientId = "jalam-".concat(VERSION).concat("@").concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));
-            }
-
+            
             /* Log Runtime Data */
             Properties system = System.getProperties();
             logger.info("********** System Properties **********\t");
@@ -182,18 +176,18 @@ public class Bootstrap {
             }
             logger.info("***************************************\t");
 
-            // TODO : File shall now be named 'messaging.properties'
             /* Get JMS Properties to get lists of JMS servers */
+            String configurationFilePath = configurationPath.concat("/").concat("messaging.properties");
             Properties jmsProps = new Properties();
             try {
-                InputStream is = Bootstrap.class.getResourceAsStream(configurationPath.concat("/").concat("messaging.properties"));
+                InputStream is = Bootstrap.class.getResourceAsStream(configurationFilePath);
                 if (is != null) {
                     jmsProps.load(is);
                 } else {
-                    jmsProps.load(new FileInputStream(configurationPath.concat("/").concat("messaging.properties")));
+                    jmsProps.load(new FileInputStream(configurationFilePath));
                 }
             } catch (FileNotFoundException ex) {
-                logger.fatal("Unable to find jms.properties configuration file, please read the doc !");
+                logger.fatal("Unable to load configuration file from : " + configurationFilePath + ", please read the doc !");
                 System.exit(1);
             }
 
@@ -205,6 +199,11 @@ public class Bootstrap {
             } catch (ClassNotFoundException ex) {
                 logger.fatal("Class not found ! : ".concat(System.getProperty("handler.class")));
                 System.exit(1);
+            }
+            
+            if (clientId == null || clientId.trim().equals("")) {
+                // If not specified, a default clientId will be jalam-X.Y@hostname (reverse lookup)
+                clientId = "jalam-".concat(VERSION).concat("@").concat(InetAddress.getLocalHost().getHostName().replaceAll("\\.", "-"));
             }
             
             final MessagingClient client;
