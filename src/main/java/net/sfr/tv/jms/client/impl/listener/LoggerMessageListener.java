@@ -21,17 +21,13 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.messaging.client.impl.AbstractLoggerConsumer;
+import net.sfr.tv.messaging.client.impl.LoggerConsumerImpl;
 
 /**
  * A simple message listener, printing message content to logging facility.
  * 
  */
-public class LoggerMessageListener extends AbstractLoggerConsumer implements MessageListener {
-    
-    public LoggerMessageListener(final String[] destinations) {
-        super(destinations);
-    }
+public class LoggerMessageListener extends LoggerConsumerImpl implements MessageListener {
     
     @Override
     public void onMessage(Message msg) {
@@ -68,23 +64,30 @@ public class LoggerMessageListener extends AbstractLoggerConsumer implements Mes
             }
             
             if (!outputType.equals("PROPERTY")) {
+                String sbody = null;
                 if (TextMessage.class.isAssignableFrom(msg.getClass())) {
                     String text = ((TextMessage) msg).getText();
-                    //logger.info("[".concat(String.valueOf(text.length())).concat("] : ").concat(text));
-                    logger.info(text);
+                    if (outputType.equals("FULL")) {
+                        sbody = "[".concat(String.valueOf(text.length())).concat("] : ").concat(text);
+                    } else {
+                        sbody = text;
+                    }
                 } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
                     BytesMessage bm = (BytesMessage) msg;
                     byte[] body = new byte[(int)bm.getBodyLength()];
                     bm.readBytes(body);
 
-                    logger.info("[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body)));
+                    if (outputType.equals("FULL")) {
+                        sbody = "[".concat(String.valueOf(body.length)).concat("] : ").concat(new String(body));
+                    } else {
+                        sbody = new String(body);
+                    }
                 }
-            }
-            
-            if (outputType.equals("PROPERTY")) {
+                logger.info(sbody);
+            } else {
                 logger.info(msg.getStringProperty(outputProperty));
             }
-
+           
             // ACK the message to remove it from the queue.
             msg.acknowledge();
             
@@ -96,4 +99,7 @@ public class LoggerMessageListener extends AbstractLoggerConsumer implements Mes
             logger.error(ex.getMessage(), ex);
         }
     }
+
+    @Override
+    public void release() {}
 }

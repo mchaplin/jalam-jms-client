@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package net.sfr.tv.jms.client.impl;
+package net.sfr.tv.messaging.client.impl;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -24,7 +24,9 @@ import net.sfr.tv.jms.client.impl.listener.LoggerMessageListener;
 import org.apache.log4j.Logger;
 
 /**
- * An "embedded" Lifecycle Controller. Feel free to create your own to do more sophisticated things !
+ * Base LifecycleController implementation. 
+ * Feel free to create your own to do more sophisticated things !
+ * Like external resources allocation & release.
  *
  * @see net.sfr.tv.messaging.client.api.LifecycleController
  *
@@ -37,22 +39,16 @@ public class LifecycleControllerImpl implements LifecycleController {
     private final Logger logger = Logger.getLogger(LifecycleControllerImpl.class);
 
     private final Map<Integer, MessageConsumer> listeners = new HashMap<>();
-    
-    private final String[] destinations;
 
     private int insertIdx = 0;
     private int retrievalIdx = 0;
-
-    public LifecycleControllerImpl(final String[] destinations) {
-        this.destinations = destinations;
-    }
 
     @Override
     public void initListener(Class listener) throws ResourceInitializerException {
         if (listener == null) {
             listener = LoggerMessageListener.class;
         }
-        listeners.put(insertIdx++, createListener(listener, destinations));
+        listeners.put(insertIdx++, createListener(listener));
         logger.info("Listener registered : ".concat(listener.getName()));        
     }
     
@@ -75,16 +71,11 @@ public class LifecycleControllerImpl implements LifecycleController {
      * @param listenerClass class of new listener to be instantiated and added.
      * @throws ResourceInitializerException
      */
-    /*@Override
-     public void registerListener(final Class listenerClass, final String[] destinations) throws ResourceInitializerException {
-     listeners.put(insertIdx++, createListener(listenerClass, destinations));
-     logger.debug("Listener registered : ".concat(listenerClass.getName()));
-     }*/
-    private MessageConsumer createListener(final Class listenerClass, final String[] destinations) throws ResourceInitializerException {
+    private MessageConsumer createListener(final Class listenerClass) throws ResourceInitializerException {
         MessageConsumer ret = null;
         try {
-            Constructor ct = listenerClass.getConstructor(String[].class);
-            ret = (MessageConsumer) ct.newInstance(new Object[]{destinations});
+            Constructor ct = listenerClass.getConstructor();
+            ret = (MessageConsumer) ct.newInstance();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             throw new ResourceInitializerException(ex);
         }

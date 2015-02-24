@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sfr.tv.messaging.client.impl.AbstractLoggerConsumer;
+import net.sfr.tv.messaging.client.impl.LoggerConsumerImpl;
 import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.client.ClientMessage;
@@ -30,11 +30,7 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class LoggerMessageHandler extends AbstractLoggerConsumer implements MessageHandler {
-
-    public LoggerMessageHandler(final String[] destinations) {
-        super(destinations);
-    }
+public class LoggerMessageHandler extends LoggerConsumerImpl implements MessageHandler {
 
     @Override
     public void onMessage(ClientMessage msg) {
@@ -90,4 +86,6 @@ public class LoggerMessageHandler extends AbstractLoggerConsumer implements Mess
         }
     }
 
+    @Override
+    public void release() {}
 }

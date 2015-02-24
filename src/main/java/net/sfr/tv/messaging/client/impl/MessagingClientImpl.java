@@ -30,9 +30,9 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class AbstractMessagingClient implements MessagingClient {
+public abstract class MessagingClientImpl implements MessagingClient {
     
-    private static final Logger logger = Logger.getLogger(AbstractMessagingClient.class);
+    private static final Logger logger = Logger.getLogger(MessagingClientImpl.class);
 
     /**
      * Stateful JMS connection managers : Handles connection/failover for a logical group of JMS servers.
@@ -57,7 +57,7 @@ public abstract class AbstractMessagingClient implements MessagingClient {
      * 
      * @throws net.sfr.tv.exceptions.ResourceInitializerException
      */
-    public AbstractMessagingClient(
+    public MessagingClientImpl(
             MessagingProvidersConfiguration jndiProviderConfig,
             String preferredServer,
             String subscriptionBaseName,
@@ -101,9 +101,9 @@ public abstract class AbstractMessagingClient implements MessagingClient {
 
         try {
             if (LifecycleController.class.isAssignableFrom(lifeCycleControllerClass)) {
-                Constructor ct = lifeCycleControllerClass.getConstructor(String[].class);
+                Constructor ct = lifeCycleControllerClass.getConstructor();
                 logger.info("LifecycleController class : ".concat(lifeCycleControllerClass.getName()));
-                return lifecycleController = (LifecycleController) ct.newInstance(new Object[] {destinations});
+                return lifecycleController = (LifecycleController) ct.newInstance();
             } else {
                 throw new ResourceInitializerException(lifeCycleControllerClass.getName().concat(" is not a subtype of ").concat(LifecycleController.class.getName()), null);
             }

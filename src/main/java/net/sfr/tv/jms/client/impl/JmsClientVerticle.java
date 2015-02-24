@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.jms.client.impl;
 
 import org.vertx.java.platform.Verticle;
 

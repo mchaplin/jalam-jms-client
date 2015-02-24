@@ -24,14 +24,14 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.messaging.impl.MessageConsumerImpl;
+import net.sfr.tv.messaging.api.MessageConsumer;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class LatencyListener extends MessageConsumerImpl implements MessageListener {
+public class LatencyListener implements MessageListener, MessageConsumer {
     
     private static final Logger logger = Logger.getLogger(ThroughputMessageListener.class.getName());
     
@@ -39,8 +39,7 @@ public class LatencyListener extends MessageConsumerImpl implements MessageListe
     
     private final Histogram histogram = metrics.histogram("Latency");
     
-    public LatencyListener(final String[] destinations) {
-        super(destinations);
+    public LatencyListener() {
         
         final ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
           .convertRatesTo(TimeUnit.SECONDS)
@@ -69,4 +68,6 @@ public class LatencyListener extends MessageConsumerImpl implements MessageListe
         } catch (JMSException e) {logger.error(msg, e);};
     }
     
+    @Override
+    public void release() {};
 }

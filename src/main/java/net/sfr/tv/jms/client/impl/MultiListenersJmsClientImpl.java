@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.jms.client.impl;
 
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.messaging.client.api.MessagingClient;
-import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
+import net.sfr.tv.messaging.client.impl.MessagingClientImpl;
 import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class MultiListenersJmsClientImpl extends AbstractMessagingClient {
+public class MultiListenersJmsClientImpl extends MessagingClientImpl {
 
     /**
      * Constructor.

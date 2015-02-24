@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package net.sfr.tv.jms.client;
+package net.sfr.tv.jms.client.impl;
 
 import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
 import net.sfr.tv.messaging.api.MessageConsumer;
@@ -22,7 +22,7 @@ import net.sfr.tv.jms.cnxmgt.JmsConsumerConnectionManager;
 import net.sfr.tv.messaging.api.connection.ConnectionManager;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
-import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
+import net.sfr.tv.messaging.client.impl.MessagingClientImpl;
 import org.apache.log4j.Logger;
 
 /**
@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  * @author scott.messner.prestataire@sfr.com
  * @author pierre.cheynier@sfr.com
  */
-public class JmsClientImpl extends AbstractMessagingClient {
+public class JmsClientImpl extends MessagingClientImpl {
 
     private static final Logger logger = Logger.getLogger(JmsClientImpl.class);
 
@@ -78,12 +78,12 @@ public class JmsClientImpl extends AbstractMessagingClient {
                     }
                     ConsumerConnectionManager cnxManager = new JmsConsumerConnectionManager(group, msgingProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, msgingProviderConfig.getCredentials(), (MessageListener) listener);
                     cnxManager.connect(2, TimeUnit.SECONDS);
-                    logger.info("Connection created for ".concat(listener.getName()));
+                    logger.info("Connection created for ".concat(listener.getClass().getName()));
 
                     String subscriptionName;
                     int subscriptionIdx = 0;
-                    for (String dest : listener.getDestinations()) {
-                        subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(listener.getDestinations().length > 1 ? "-" + subscriptionIdx++ : "");
+                    for (String dest : destinations) {
+                        subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(destinations.length > 1 ? "-" + subscriptionIdx++ : "");
                         cnxManager.subscribe(new SubscriptionDescriptor(dest, isTopicSubscription, isDurableSubscription, subscriptionName, selector), 2, TimeUnit.SECONDS);
                         if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
                             logger.info("Destination : ".concat(dest));

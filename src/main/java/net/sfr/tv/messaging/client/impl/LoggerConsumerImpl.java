@@ -15,14 +15,15 @@
  */
 package net.sfr.tv.messaging.client.impl;
 
-import net.sfr.tv.messaging.impl.MessageConsumerImpl;
+import net.sfr.tv.messaging.api.MessageConsumer;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Logging consumer initialization code factorized.
+ * 
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class AbstractLoggerConsumer extends MessageConsumerImpl {
+public abstract class LoggerConsumerImpl implements MessageConsumer {
  
     protected Logger logger;
     
@@ -30,13 +31,12 @@ public abstract class AbstractLoggerConsumer extends MessageConsumerImpl {
         
     protected final String outputProperty;
     
-    public AbstractLoggerConsumer(final String[] destinations) {
-        super(destinations);
+    public LoggerConsumerImpl() {
         String loggerName = System.getProperty("listener.logger.name");
         if (loggerName != null && loggerName.trim().length() > 0) {
             logger = Logger.getLogger(loggerName);
         } else {
-            logger = Logger.getLogger(AbstractLoggerConsumer.class);
+            logger = Logger.getLogger(LoggerConsumerImpl.class);
         }
         
         outputType = System.getProperty("listener.output.type", "FULL");

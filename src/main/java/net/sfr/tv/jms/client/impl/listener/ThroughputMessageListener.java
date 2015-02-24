@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
-import net.sfr.tv.messaging.impl.MessageConsumerImpl;
+import net.sfr.tv.messaging.api.MessageConsumer;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu
  */
-public class ThroughputMessageListener extends MessageConsumerImpl implements MessageListener {
+public class ThroughputMessageListener implements MessageListener, MessageConsumer {
     
     private static final Logger logger = Logger.getLogger(ThroughputMessageListener.class.getName());
     
@@ -37,8 +37,7 @@ public class ThroughputMessageListener extends MessageConsumerImpl implements Me
     
     private final Meter messagesMeter = metrics.meter("Throughput");
     
-    public ThroughputMessageListener(final String[] destinations) {
-        super(destinations);
+    public ThroughputMessageListener() {
         
         final ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
           .convertRatesTo(TimeUnit.SECONDS)
@@ -52,4 +51,7 @@ public class ThroughputMessageListener extends MessageConsumerImpl implements Me
         messagesMeter.mark();
         try { msg.acknowledge(); } catch (JMSException e) {logger.error(msg, e);};
     }
+
+    @Override
+    public void release() {}
 }

@@ -22,7 +22,7 @@ import net.sfr.tv.hornetq.HqCoreConnectionManager;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.MessageConsumer;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
-import net.sfr.tv.messaging.client.impl.AbstractMessagingClient;
+import net.sfr.tv.messaging.client.impl.MessagingClientImpl;
 import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.client.MessageHandler;
@@ -31,7 +31,7 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HornetQClientImpl extends AbstractMessagingClient {
+public class HornetQClientImpl extends MessagingClientImpl {
 
     private static final Logger logger = Logger.getLogger(HornetQClientImpl.class);
     
@@ -48,21 +48,17 @@ public class HornetQClientImpl extends AbstractMessagingClient {
         
         // Connect and Subscribe listeners to destinations
         cnxManagers = new TreeMap<>();
-        int idxListener = 0;
         for (String group : msgingProviderConfig.getGroups()) {
             try {
                 for (MessageConsumer listener : lifecycleController.getListeners()) {
-                    /*if (lifecycleController.getListeners().size() > 1) {
-                        clientId = clientId.concat("/" + idxListener++);
-                    }*/
                     ConsumerConnectionManager cnxManager = new HqCoreConnectionManager(group, msgingProviderConfig.getCredentials(), msgingProviderConfig.getServersGroup(group), preferredServer, (MessageHandler) listener);
                     cnxManager.connect(2, TimeUnit.SECONDS);
-                    logger.info("Connection created for ".concat(listener.getName()));
+                    logger.info("Connection created for ".concat(listener.getClass().getName()));
 
                     String subscriptionName;
                     int subscriptionIdx = 0;
-                    for (String dest : listener.getDestinations()) {
-                        subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(listener.getDestinations().length > 1 ? "-" + subscriptionIdx++ : "");
+                    for (String dest : destinations) {
+                        subscriptionName = subscriptionBaseName.concat("@").concat(dest).concat(destinations.length > 1 ? "-" + subscriptionIdx++ : "");
                         // FIXME : Handle topic/durable subscription booleans
                         cnxManager.subscribe(new SubscriptionDescriptor(dest, true, true, subscriptionName, selector), 2, TimeUnit.SECONDS);
                         if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
