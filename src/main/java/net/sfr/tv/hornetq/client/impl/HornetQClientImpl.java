@@ -62,10 +62,10 @@ public class HornetQClientImpl extends MessagingClientImpl {
                         // FIXME : Handle topic/durable subscription booleans
                         cnxManager.subscribe(new SubscriptionDescriptor(dest, true, true, subscriptionName, selector), 2, TimeUnit.SECONDS);
                         if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
-                            logger.info("Destination : ".concat(dest));
-                            logger.info("Subscription base name : ".concat(subscriptionBaseName));
-                            logger.info("Filter : ".concat(selector != null ? selector : ""));
-                            logger.info("Servers groups : ".concat(String.valueOf(msgingProviderConfig.getGroups().size())));
+                            logger.info("\tDestination : ".concat(dest));
+                            logger.info("\tSubscription base name : ".concat(subscriptionBaseName));
+                            logger.info("\tFilter : ".concat(selector != null ? selector : ""));
+                            logger.info("\tServers groups : ".concat(String.valueOf(msgingProviderConfig.getGroups().size())));
                         }
                     }
                     cnxManagers.put("clientId-unset", cnxManager);

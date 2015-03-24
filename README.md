@@ -6,16 +6,19 @@ Production grade J2SE JMS client.
 Features : 
 ==========
 
+ - Dual support of JMS 1.1 and HornetQ native ('core') protocol.
  - Failover : Automatic reconnection.
  - Cascading failover between servers if available.
- - Parallel connections to multiple servers
- - Parallel subscription to multiple topics/queues
- - Includes default listeners : STDOUT, journaling
+ - Parallel connections to multiple servers.
+ - Parallel subscription to multiple topics/queues.
+ - Includes default listeners : STDOUT, journaling.
  - Extensible : Implements custom listener, or more complex interface, to setup/release
     additionnal resources. (I/O, network, connection pools)
 
 Building from sources :
 =======================
+
+    git clone https://github.com/sfr-network-service-platforms/jalam.git
 
     git clone https://github.com/sfr-network-service-platforms/jalam.git
     mvn dependency:copy-dependencies package install
@@ -28,26 +31,41 @@ The JAR archive classpath requires the following deployment layout :
     ./jalam-<version>.jar
     ./lib/<runtime-libraries>.jar
 
-Configuration :
-===============
+Usage :
+=======
 
-Upon startup, a list of configured JNDI providers is loaded from a classpath file named 'jms.properties'.
+Upon startup, a list of configured JNDI providers is loaded from a classpath file named 'messaging.properties'.
 It allows to define :
 
  - Logical groups of servers
  - Servers that belongs to those groups.
  
-Simple setup (jms.properties) :
--------------------------------
+Simple setup (messaging.properties) :
+-------------------------------------
  
  The simplest configuration file contains the following :
 
     # A default group
     config.groups=default
 
-    # A JNDI provider whose alias is 'broker00'
-    default.jms.server.broker00.host=broker00.mydomain.com
-    default.jms.server.broker00.port=7676
+    # A JNDI provider whose alias is 'mybroker'
+    default.jms.server.mybroker.host=mybroker.mydomain.com
+    default.jms.server.mybroker.port=7676
+    default.hqtransport.server.mybroker.port=5465
+
+ You can now run the client :
+    java -Dconfig.path=. -jar /usr/local/bin/jalam/jalam-current.jar -d /jms/someTopic -c myClientId -s mySubscription
+
+
+ Available arguments : 
+
+    (-Dconfig.path=your.configPath) (-Dhandler.class=your.lifeCycleController) -jar jalam.jar -d [destination] (-c [clientId]) -s [subscriptionName] (-q) (-p) (-cf[connectionFactoryName]) <-f [filter]>
+ - -Dconfig.path : /path/to/configuration. Configuration includes the file 'messaging.properties' and 'log4j.properties'
+ - -q  : Destination is a queue. Default : Topic.
+ - -p  : Create a persistent ('durable') subscription. Default is false.
+ - -u  : Unsubscribe an active durable subscription, then exit.
+ - -cf : JNDI Connection Factory name. Default 'ConsumerConnectionFactory'.
+ - -Dhandler.class : Set the LifeCycleController to use. Default is net.sfr.tv.jms.client.DefaultLifeCycleController. If a MessageListener is passed, then the DefaultLifeCycleController use a dedicated one instead of net.sfr.tv.jms.client.listener.LoggerMessageListener
 
 Logging :
 ---------

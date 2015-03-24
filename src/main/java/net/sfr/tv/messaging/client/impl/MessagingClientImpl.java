@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import net.sfr.tv.exceptions.ResourceInitializerException;
 import net.sfr.tv.messaging.impl.MessagingProvidersConfiguration;
-import net.sfr.tv.messaging.api.connection.ConnectionManager;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.client.api.LifecycleController;
 import net.sfr.tv.messaging.client.api.MessagingClient;
@@ -78,7 +77,7 @@ public abstract class MessagingClientImpl implements MessagingClient {
         
         // START MESSAGE DELIVERY
         try {
-            for (ConnectionManager cnxManager : cnxManagers.values()) {
+            for (ConsumerConnectionManager cnxManager : cnxManagers.values()) {
                 cnxManager.start();
             }
         } catch (Exception ex) {
