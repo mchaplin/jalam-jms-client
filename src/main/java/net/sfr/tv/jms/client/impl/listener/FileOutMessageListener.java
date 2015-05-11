@@ -15,48 +15,27 @@
  */
 package net.sfr.tv.jms.client.impl.listener;
 
-import java.io.File;
 import java.nio.ByteBuffer;
+import javax.jms.BytesMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import net.sfr.tv.messaging.api.MessageConsumer;
-import org.apache.log4j.Logger;
-import org.hornetq.core.journal.SequentialFile;
-import org.hornetq.core.journal.impl.NIOSequentialFileFactory;
+import net.sfr.tv.messaging.client.impl.FileOutConsumerImpl;
 
 /**
  * A simple message listener, printing message contents to file passed by -Dlistener.file.output
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class FileOutMessageListener implements MessageListener, MessageConsumer {
-
-    private final Logger logger = Logger.getLogger(FileOutMessageListener.class);
-    
-    private final String fileName;
-    
-    private final SequentialFile out;
+public class FileOutMessageListener extends FileOutConsumerImpl implements MessageListener {
     
     public FileOutMessageListener() throws Exception {
-        
-        fileName = System.getProperty("listener.file.output", "");
-        File wrapper = new File(fileName);
-        
-        NIOSequentialFileFactory fileFactory = new NIOSequentialFileFactory(wrapper.getParent());
-        out = fileFactory.createSequentialFile(wrapper.getName(), 1); // MAX IO VALUE FOR NIO IS 1
-        
-        out.open();
-        
+        super();
     }
     
     @Override
     public void release() {
-        try {
-            out.close();
-        } catch (Exception ex) {
-            logger.warn("Unable to properly close " + fileName, ex);
-        } 
+        super.release();
     }
     
     @Override
@@ -73,11 +52,17 @@ public class FileOutMessageListener implements MessageListener, MessageConsumer 
                 body += ((TextMessage) msg).getText();
                 //body += System.lineSeparator();
                 body += "\n";
-                bb = ByteBuffer.wrap(body.getBytes());
-                
-                out.writeDirect(bb, false);
+
+            } else if (BytesMessage.class.isAssignableFrom(msg.getClass())) {
+                BytesMessage bm = (BytesMessage) msg;
+                byte[] bbody = new byte[(int)bm.getBodyLength()];
+                bm.readBytes(bbody);
+                body += new String(bbody).concat("\n");
             }
 
+            bb = ByteBuffer.wrap(body.getBytes());
+            out.writeDirect(bb, false);
+            
             // ACK the message to remove it from the queue.
             msg.acknowledge();
 

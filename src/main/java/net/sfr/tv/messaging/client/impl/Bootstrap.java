@@ -207,18 +207,28 @@ public class Bootstrap {
             
             final MessagingClient client;
             
+            Class listenerClass = null;
+            try {
+                listenerClass = System.getProperty("listener.class") != null ? 
+                        ClassLoader.getSystemClassLoader().loadClass(System.getProperty("listener.class")) : 
+                        (jmsMode ? LoggerMessageListener.class : LoggerMessageHandler.class);
+            } catch (ClassNotFoundException ex) {
+                logger.fatal("Class not found ! : ".concat(System.getProperty("listener.class")));
+                System.exit(1);
+            }
+            
             if (!jmsMode) {
                 // HORNETQ CORE CLIENT PROTOCOL
-                client = new HornetQClientImpl(messagingProvidersConfig, preferredServer, subscriptionName, selector, lifecycleControllerClass, LoggerMessageHandler.class, destination.split("\\,"));
+                client = new HornetQClientImpl(messagingProvidersConfig, preferredServer, subscriptionName, selector, lifecycleControllerClass, listenerClass, destination.split("\\,"));
             } else {
                 // JMS API CLIENT
                 if (jmsProps.containsKey("config.listeners")) {
                     // COMPLEX LISTENERS/DESTINATIONS DEFINED IN jms.properties
                     Map<String[], String> destinationsByListeners = new HashMap<>();
                     String listenerClassNames = jmsProps.getProperty("config.listeners");
-                    for (String listenerClass : Arrays.asList(listenerClassNames.split("\\,"))) {
-                        String destinationsString = jmsProps.getProperty(listenerClass.concat(".destinations"), null);
-                        destinationsByListeners.put(destinationsString.split("\\,"), listenerClass);
+                    for (String lstnClass : Arrays.asList(listenerClassNames.split("\\,"))) {
+                        String destinationsString = jmsProps.getProperty(lstnClass.concat(".destinations"), null);
+                        destinationsByListeners.put(destinationsString.split("\\,"), lstnClass);
                     }
 
                     client = new MultiListenersJmsClientImpl(
@@ -234,14 +244,6 @@ public class Bootstrap {
                             jndiCnxFactory);
 
                 } else {
-
-                    Class listenerClass = null;
-                    try {
-                        listenerClass = System.getProperty("listener.class") != null ? ClassLoader.getSystemClassLoader().loadClass(System.getProperty("listener.class")) : LoggerMessageListener.class;
-                    } catch (ClassNotFoundException ex) {
-                        logger.fatal("Class not found ! : ".concat(System.getProperty("handler.class")));
-                        System.exit(1);
-                    }
 
                     client = new JmsClientImpl(
                             messagingProvidersConfig,

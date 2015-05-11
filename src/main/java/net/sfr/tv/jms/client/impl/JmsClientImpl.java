@@ -77,6 +77,7 @@ public class JmsClientImpl extends MessagingClientImpl {
                         clientId = clientId.concat("/" + idxListener++);
                     }
                     ConsumerConnectionManager cnxManager = new JmsConsumerConnectionManager(group, msgingProviderConfig.getServersGroup(group), preferredServer, clientId, cnxFactoryJndiName, msgingProviderConfig.getCredentials(), (MessageListener) listener);
+                    // FIXME : After a max number of tryout, round-robin to another server.
                     cnxManager.connect(2, TimeUnit.SECONDS);
                     logger.info("Connection created for ".concat(listener.getClass().getName()));
 

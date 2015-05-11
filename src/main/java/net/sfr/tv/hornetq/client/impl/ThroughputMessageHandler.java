@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 matthieu.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.client.impl.listener;
+package net.sfr.tv.hornetq.client.impl;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
 import net.sfr.tv.messaging.client.impl.ThroughputConsumerImpl;
 import org.apache.log4j.Logger;
+import org.hornetq.api.core.HornetQException;
+import org.hornetq.api.core.client.ClientMessage;
+import org.hornetq.api.core.client.MessageHandler;
 
 /**
  *
- * @author matthieu
+ * @author matthieu.chaplin@sfr.com
  */
-public class ThroughputMessageListener extends ThroughputConsumerImpl implements MessageListener {
+public class ThroughputMessageHandler extends ThroughputConsumerImpl implements MessageHandler {
     
-    private static final Logger logger = Logger.getLogger(ThroughputMessageListener.class.getName());
-    
-    public ThroughputMessageListener() {
-        super();
-    }
+    private static final Logger logger = Logger.getLogger(ThroughputMessageHandler.class.getName());
 
     @Override
-    public void onMessage(Message msg) {
+    public void onMessage(ClientMessage cm) {
         messagesMeter.mark();
-        try { msg.acknowledge(); } catch (JMSException e) {logger.error(msg, e);};
+        try { cm.acknowledge(); } catch (HornetQException e) {logger.error(cm, e);};
     }
+    
+    
 }

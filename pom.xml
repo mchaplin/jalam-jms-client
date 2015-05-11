@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalam</artifactId>
-  <version>1.2.6-SNAPSHOT</version>
+  <version>1.2.7</version>
   <packaging>jar</packaging>
   <name>Jalam J2SE JMS Client</name>
 
